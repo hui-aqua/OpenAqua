@@ -7,6 +7,7 @@
 -------------------------------------------\n
 Any questions about this code,
 please email: hui.cheng@uis.no \n
+wave direction is x+
 """
 import numpy as np
 from numpy import pi
@@ -16,7 +17,6 @@ class Airywave:
     """
     Using Airy wave theory      \n
     """
-
     def __init__(self, waveHeight=1.0, waveLength=25.0, waterDepth=60.0):
         """
         :param waveHeight: [float] Unit: [m]. wave height.
