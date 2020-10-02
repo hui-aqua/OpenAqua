@@ -66,35 +66,41 @@ def jonswap_spectra(omega, hs, tp, gamma=3.3, gamma_auto=False):
 
 
 
+
+
 if __name__ == "__main__":
-    
     time_max = 3600 # [s]
     dt=0.1
-    time_frame=np.arange(0,1800,dt)
+    time_frame=np.arange(0,time_max,dt)
+    
+    fre_max=3
     d_fre=2 * np.pi / time_max
-    # fre_range = np.linspace(2 * np.pi / time_max, 3, 1000)
-    fre_range=np.arange(d_fre,3,d_fre)
-    xi_range=np.sqrt(2*d_fre*jonswap_spectra(fre_range, 4, 8, gamma=3.3))
-    # print(xi_range)
-    print(np.dot(xi_range,fre_range))
-    # theta_range=np.random.randn(len(fre_range))
-    yita=[]
-    for t in time_frame:
-        theta=random.uniform(0,2*np.pi)
+    fre_range=np.arange(d_fre,fre_max,d_fre)
+    
+    xi_range=np.sqrt(2*d_fre*jonswap_spectra(fre_range, 4, 8.4, gamma=3.3))
+    yita_com=np.zeros((len(xi_range),len(time_frame)))
+
+    for index, each in  enumerate(list(zip(xi_range,fre_range))):
+        yita_com[index,:]= each[0]*np.cos(each[1]*time_frame-random.uniform(0,2*np.pi))
+    yita=np.sum(yita_com,axis=0)      
+
+    print("The maximum elevation is"+str(max(yita)))
+    print("The minimum elevation is"+str(min(yita)))
+    plt.figure()
+    plt.plot(time_frame, yita)
+    plt.xlabel("time (s)")
+    plt.ylabel("surface elevation (m)")
+    plt.xlim(0, 3600)
+    plt.ylim(-5,5)
+    plt.show()
         
     
-    # plt.figure()
-    # plt.plot(time_frame, waves_sum)
-    # plt.show()
-    
-    
-    
-    # Plot wave spectras
+    # # Plot wave spectras
     plt.figure()
-    plt.plot(fre_range, jonswap_spectra(fre_range, 4, 8, gamma=5), label="jonswap_gama=5")
-    plt.plot(fre_range, jonswap_spectra(fre_range, 4, 8, gamma=2), label="jonswap_gama=2")
-    plt.plot(fre_range, jonswap_spectra(fre_range, 4, 8, gamma=1), label="jonswap_gama=1")
-    plt.plot(fre_range, jonswap_spectra(fre_range, 4, 8, gamma=3.3), label="jonswap_gama=3.3")
+    plt.plot(fre_range, jonswap_spectra(fre_range, 4, 8.4, gamma=5), label="jonswap_gama=5")
+    plt.plot(fre_range, jonswap_spectra(fre_range, 4, 8.4, gamma=2), label="jonswap_gama=2")
+    plt.plot(fre_range, jonswap_spectra(fre_range, 4, 8.4, gamma=1), label="jonswap_gama=1")
+    plt.plot(fre_range, jonswap_spectra(fre_range, 4, 8.4, gamma=3.3), label="jonswap_gama=3.3")
     plt.xlabel("omega (rad)")
     plt.ylabel("S(omega)")
     plt.xlim(0, 3)
@@ -102,6 +108,5 @@ if __name__ == "__main__":
     plt.grid(True)
     plt.legend()
     plt.show()
-
 
 
