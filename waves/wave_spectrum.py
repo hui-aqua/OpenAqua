@@ -10,7 +10,7 @@ please email: hui.cheng@uis.no \n
 """
 
 import numpy as np
-
+import random 
 import matplotlib.pyplot as plt
 
 
@@ -75,14 +75,17 @@ if __name__ == "__main__":
     # fre_range = np.linspace(2 * np.pi / time_max, 3, 1000)
     fre_range=np.arange(d_fre,3,d_fre)
     xi_range=np.sqrt(2*d_fre*jonswap_spectra(fre_range, 4, 8, gamma=3.3))
-    theta_range=np.random.randn(len(fre_range))
-    waves_sum=[]
+    # print(xi_range)
+    print(np.dot(xi_range,fre_range))
+    # theta_range=np.random.randn(len(fre_range))
+    yita=[]
     for t in time_frame:
-        waves_sum.append(np.sum(xi_range*np.sin(fre_range*t-xi_range)))
+        theta=random.uniform(0,2*np.pi)
+        
     
-    plt.figure()
-    plt.plot(time_frame, waves_sum)
-    plt.show()
+    # plt.figure()
+    # plt.plot(time_frame, waves_sum)
+    # plt.show()
     
     
     
