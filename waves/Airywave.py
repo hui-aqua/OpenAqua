@@ -16,21 +16,28 @@ from numpy import pi
 class Airywave:
     """
     Using Airy wave theory      \n
+    Ref. DNV GL-RP205 Ver. 2008:P45
+    Linear wave theory:
+    
     """
-    def __init__(self, waveHeight=1.0, waveLength=25.0, waterDepth=60.0):
+    def __init__(self, waveHeight=1.0, wavePeriod=10, waterDepth=60.0, direction=0):
         """
         :param waveHeight: [float] Unit: [m]. wave height.
-        :param waveLength: [float] Unit: [m]. wavelength.
-        :param waterDepth: [float] Unit: [m]. water depth.
+        :param wavePeriod: [float] Unit: [s]. wave period.
+        :param waterDepth: [float] Unit: [m]. wave depth.
+        :param direction： [float] Unit: [degree]. direction of propagation, measured from the positive x-axis.
         """
         self.gravity = 9.81
-        self.waveHeight = waveHeight
-        self.waveLength = waveLength
-        self.waterDepth = waterDepth
-        self.phase_velocity = np.sqrt(
-            self.gravity * waveLength * np.tanh(2 * pi * waterDepth / waveLength) / (2.0 * pi))
-        self.wavePeriod = waveLength / self.phase_velocity
+        self.wave_Height = waveHeight
+        self.wave_Period = wavePeriod
+        self.water_Depth = waterDepth
+        self.direction = np.pi*direction/180.0
+
         self.wave_k = 2 * pi / waveLength
+
+        self.phase_velocity = np.sqrt(self.gravity * waveLength * np.tanh(2 * pi * waterDepth / waveLength) / (2.0 * pi))
+        
+        
         self.pi_h_t = pi * waveHeight / self.wavePeriod
         self.pi_h_l = pi * waveHeight / waveLength
         self.pi_h_t_2 = 2 * waveHeight * pow(pi / self.wavePeriod, 2)

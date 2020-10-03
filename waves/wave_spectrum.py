@@ -73,9 +73,11 @@ if __name__ == "__main__":
     dt=0.1
     time_frame=np.arange(0,time_max,dt)
     
+    
     fre_max=3
     d_fre=2 * np.pi / time_max
     fre_range=np.arange(d_fre,fre_max,d_fre)
+    # fre_range=np.linspace(d_fre,fre_max,10000)
     
     xi_range=np.sqrt(2*d_fre*jonswap_spectra(fre_range, 4, 8.4, gamma=3.3))
     yita_com=np.zeros((len(xi_range),len(time_frame)))
