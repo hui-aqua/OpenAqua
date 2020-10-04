@@ -11,8 +11,6 @@ please email: hui.cheng@uis.no \n
 
 import numpy as np
 import random 
-import matplotlib.pyplot as plt
-
 
 def pierson_moskowitz_spectra(omega, hs, tp):
     """
@@ -69,6 +67,7 @@ def jonswap_spectra(omega, hs, tp, gamma=3.3, gamma_auto=False):
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     time_max = 3600 # [s]
     dt=0.1
     time_frame=np.arange(0,time_max,dt)
@@ -81,15 +80,25 @@ if __name__ == "__main__":
     
     xi_range=np.sqrt(2*d_fre*jonswap_spectra(fre_range, 4, 8.4, gamma=3.3))
     yita_com=np.zeros((len(xi_range),len(time_frame)))
-
+    import Airywave as aw
+    wave_elevation_with_time=yita_com
+    list_of_waves=[]
     for index, each in  enumerate(list(zip(xi_range,fre_range))):
+        wave_period=2*np.pi/each[1]
+        list_of_waves.append(aw.Airywave(each[0],wave_period,60,0,random.uniform(0,180)))
+    # print(len(list_of_waves))
+    for index, each in  enumerate(list(zip(xi_range,fre_range))):
+        wave_elevation_with_time[index,:]=[list_of_waves[index].get_elevation([0,0,0],i) for i in time_frame.tolist()]
         yita_com[index,:]= each[0]*np.cos(each[1]*time_frame-random.uniform(0,2*np.pi))
+    
     yita=np.sum(yita_com,axis=0)      
-
-    print("The maximum elevation is"+str(max(yita)))
-    print("The minimum elevation is"+str(min(yita)))
+    wave_elevation=np.sum(wave_elevation_with_time,axis=0)   
+       
+    print("The maximum elevation is"+str(max(wave_elevation)))
+    print("The minimum elevation is"+str(min(wave_elevation)))
     plt.figure()
-    plt.plot(time_frame, yita)
+    plt.plot(time_frame, wave_elevation,label="wave1")
+    plt.plot(time_frame, yita,label="wave2")
     plt.xlabel("time (s)")
     plt.ylabel("surface elevation (m)")
     plt.xlim(0, 3600)
