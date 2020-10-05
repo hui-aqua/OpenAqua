@@ -20,7 +20,7 @@ class Airywave:
     Linear wave theory:
     
     """
-    def __init__(self, waveHeight=1.0, wavePeriod=10, waterDepth=60.0, direction=0,start_phase=0):
+    def __init__(self, waveHeight=1.0, wavePeriod=10, waterDepth=60.0, direction=0, start_phase=0):
         """
         :param waveHeight: [float] Unit: [m]. wave height.
         :param wavePeriod: [float] Unit: [s]. wave period.
@@ -232,7 +232,8 @@ if __name__ == "__main__":
     plt.legend()
     
     plt.tight_layout()
-    plt.show()
+    plt.savefig('./figures/waveperiod_vs_wavelengthAndphasevelocity.png', dpi=600)
+    # plt.show()
         
     
     
@@ -251,11 +252,11 @@ if __name__ == "__main__":
     space_slice=np.ones((1000,3))
     x_axis=[]
     for posi in range(1000):
-        space_slice[posi]=[posi/10,0,0]
-        x_axis.append(posi/10)
+        space_slice[posi]=[posi/2,0,0]
+        x_axis.append(posi/2)
     wave_elevation_with_x=[]
     wave_height=1.5
-    wave_period=6
+    wave_period=10
    
     for item in water_d:
         wave_elevation_with_time.append([Airywave(wave_height,wave_period,item,0).get_elevation([0,0,0],i) for i in time_slice])
@@ -278,13 +279,14 @@ if __name__ == "__main__":
         plt.plot(x_axis,wave_elevation_with_x[water_d.index(item)],label= "Depth "+str(item))
     plt.xlabel("X (m)")
     plt.ylabel("Wave elevation (m)")
-    plt.xlim(0, 100)
+    plt.xlim(0, 500)
     plt.ylim(-3,3)
     plt.grid(True)
     plt.legend()
     
     plt.tight_layout()
-    plt.show()
+    plt.savefig('./figures/wave_shape.png', dpi=600)
+    # plt.show()
     
     
     
