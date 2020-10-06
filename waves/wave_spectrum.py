@@ -97,13 +97,14 @@ if __name__ == "__main__":
     
     # plot 2 
     import Airywave as aw
-    g1=2
+    g1=3
     g2=1
     gs = gridspec.GridSpec(g1, g2)           # Create 1x2 sub plots
     
     
-    xi_range=np.sqrt(2*d_fre*jonswap_spectra(fre_range, 4, 8.4, gamma=3.3))
+    xi_range=np.sqrt(2*d_fre*jonswap_spectra(fre_range, 4, 8.4, gamma=1.0))
     yita_com=np.zeros((len(xi_range),len(time_frame)))
+    yita_com2=np.zeros((len(xi_range),len(time_frame)))
     
     
     space_slice=np.ones((1000,3))
@@ -118,37 +119,54 @@ if __name__ == "__main__":
         wave_period=2*np.pi/each[1]
         list_of_waves.append(aw.Airywave(each[0],wave_period,60,0,random.uniform(0,180)))
         
-    # print(len(list_of_waves))
     for index, each in  enumerate(list(zip(xi_range,fre_range))):
-        wave_elevation_with_x[index,:]=list_of_waves[index].get_elevation_at_nodes(space_slice,0)
-        # print("finish "+ str(index))
-        yita_com[index,:]= each[0]*np.cos(each[1]*time_frame-random.uniform(0,2*np.pi))
-    
+        yita_com[index,:]= [list_of_waves[index].get_elevation([0,0,0],t) for t in time_frame.tolist()]
+        yita_com2[index,:]= [list_of_waves[index].get_elevation([100,0,0],t) for t in time_frame.tolist()]
+        # yita_com[index,:]= each[0]*np.cos(each[1]*time_frame-random.uniform(0,2*np.pi))
+        # yita_com2[index,:]= each[0]*np.cos(each[1]*time_frame-random.uniform(0,2*np.pi))
     yita=np.sum(yita_com,axis=0)      
-    wave_elevation=np.sum(wave_elevation_with_x,axis=0)   
-       
-    print("The maximum elevation is"+str(max(wave_elevation)))
-    print("The minimum elevation is"+str(min(wave_elevation)))
-    
-    plt.figure(figsize=(6.3, 5.0))
-    ax = plt.subplot(gs[0, 0])
-    plt.title("surface elvation along x axis when time = 0s")
-    plt.plot(x_axis, wave_elevation)
-    plt.xlabel("X (m)")
-    plt.ylabel("surface elevation (m)")
-    plt.xlim(0, 500)
-    plt.ylim(-5,5)
-    
-    ax = plt.subplot(gs[1, 0])
-    plt.title("surface elvation with time at position x=0,y=0")
-    plt.plot(time_frame, yita)
-    plt.xlabel("time (s)")
-    plt.ylabel("surface elevation (m)")
-    plt.xlim(0, 3600)
-    plt.ylim(-5,5)
-    plt.tight_layout()
-    # plt.show()
-    plt.savefig('./figures/waveElevations0.png', dpi=600)
+    yita2=np.sum(yita_com2,axis=0)   
+
+    t_ser=np.arange(0,3600,1).tolist()  
+    for t in t_ser:  
+        for index, each in  enumerate(list(zip(xi_range,fre_range))):
+            wave_elevation_with_x[index,:]=list_of_waves[index].get_elevation_at_nodes(space_slice,t)   
+        wave_elevation=np.sum(wave_elevation_with_x,axis=0)   
+
+        # print("The maximum elevation is"+str(max(wave_elevation)))
+        # print("The minimum elevation is"+str(min(wave_elevation)))
+
+        plt.figure(figsize=(16, 9))
+        ax = plt.subplot(gs[0, 0])
+        plt.title("surface elvation along x axis when time = "+str(t)+"s")
+        plt.plot(x_axis, wave_elevation)
+        plt.xlabel("X (m)")
+        plt.ylabel("surface elevation (m)")
+        plt.xlim(0, 500)
+        plt.ylim(-5,5)
+
+        ax = plt.subplot(gs[1, 0])
+        plt.title("surface elvation with time at position x=0,y=0")
+        plt.plot(time_frame, yita)
+        plt.xlabel("time (s)")
+        plt.ylabel("surface elevation (m)")
+        plt.xlim(0, 3600)
+        plt.ylim(-5,5)
+        plt.tight_layout()
+        # plt.show()
+
+        ax = plt.subplot(gs[2, 0])
+        plt.title("surface elvation with time at position x=100,y=0")
+        plt.plot(time_frame, yita2)
+        plt.xlabel("time (s)")
+        plt.ylabel("surface elevation (m)")
+        plt.xlim(0, 3600)
+        plt.ylim(-5,5)
+        plt.tight_layout()
+        # plt.show()
+
+        print("time is "+str(t))
+        plt.savefig('./figures/waveElevations_'+str(t)+'.png', dpi=300)
         
 
 
