@@ -110,7 +110,6 @@ class Airywave:
         else:
             horizonvelocity = 0.0
             vericalvelocity = 0.0
-            
         velo = np.array([0.0, 0.0, 0.0])
         velo[0] = horizonvelocity*np.cos(self.wave_beta)
         velo[1] = horizonvelocity*np.sin(self.wave_beta)
@@ -182,7 +181,7 @@ class Airywave:
                 # print("hh")
                 velo[i]=0.0
         return velo
-    
+
     def get_acceleration_at_nodes(self, list_of_point, global_time):
         """
         Public function.\n
@@ -192,7 +191,7 @@ class Airywave:
         """
         zeta=self.calc_zeta_instantaneous(list_of_point, global_time)
         yita=self.get_elevation(list_of_point, global_time)
-        # wheeler streching method      
+        # wheeler streching method
         z_streched=(list_of_point[:,2]-self.wave_Height/2)/(1+self.wave_Height/2/self.water_Depth)
         # z_streched=position[2]
         acce = np.zeros((len(list_of_point),3))
@@ -203,8 +202,6 @@ class Airywave:
             if list_of_point[i,2] > yita[i]:
                 acce[i]=0.0
         return acce
-   
-
 
     def get_velocity_at_elements(self, position_nodes, elements, global_time):
         """
@@ -221,7 +218,7 @@ class Airywave:
             velocity_on_element = self.get_velocity(element_center, global_time)
             velocity_list.append(velocity_on_element)
         return np.array(velocity_list)
-    
+
     def get_acceleration_at_elements(self, position_nodes, elements, global_time):
         """
         :param position_nodes: a numpy list of position \n
@@ -236,20 +233,17 @@ class Airywave:
                 element_center += position_nodes[index] / len(element)
             acceleration_list.append(self.get_acceleration(element_center, global_time))
         return np.array(acceleration_list)
-        
 
-    
-    
-    
+
 if __name__ == "__main__":
-    
-    # validation 1, ref to Figure3-3 on page 47 from DNV GL-RP205 Ver. 2008
+
+    ## validation 1, ref to Figure3-3 on page 47 from DNV GL-RP205 Ver. 2008
     import matplotlib.pyplot as plt
     import matplotlib.gridspec as gridspec
     g1=1
     g2=2
     gs = gridspec.GridSpec(g1, g2)           # Create 1x2 sub plots
-    
+
     water_d=[10,20,30,40,50,60,80,100,1000]
     waves_length=[]
     waves_phasevelocity=[]
@@ -257,9 +251,9 @@ if __name__ == "__main__":
     for item in water_d:
         waves_length.append([Airywave(1,i,item,0).wave_Length for i in wave_period])
         waves_phasevelocity.append([Airywave(1,i,item,0).wave_phase_velocity for i in wave_period])
-    
+
     plt.figure(figsize=(6.3, 4.0))
-    
+
     ax = plt.subplot(gs[0, 0])
     for item in waves_length:
         plt.plot(wave_period,item,label= "Depth "+str(water_d[waves_length.index(item)]))
@@ -269,7 +263,7 @@ if __name__ == "__main__":
     plt.ylim(0,700)
     plt.grid(True)
     plt.legend()
-            
+
     ax = plt.subplot(gs[0, 1])
     for item in waves_phasevelocity:
         plt.plot(wave_period,item,label= "Depth "+str(water_d[waves_phasevelocity.index(item)]))
@@ -279,23 +273,21 @@ if __name__ == "__main__":
     plt.ylim(0,35)
     plt.grid(True)
     plt.legend()
-    
+
     plt.tight_layout()
     plt.savefig('./figures/waveperiod_vs_wavelengthAndphasevelocity.png', dpi=600)
     # plt.show()
-        
-    
-    
-    # validation 2 shows the wave elevation according to time and space
+
+    ## validation 2 shows the wave elevation according to time and space
     g1=2
     g2=1
     gs = gridspec.GridSpec(g1, g2)           # Create 1x2 sub plots
-    
+
     water_d=[10,20,30,40,50,60,80,100,1000]
-    
+
     time_slice=np.linspace(0,100,1000)
     wave_elevation_with_time=[]
-    
+
     space_slice=np.ones((1000,3))
     x_axis=[]
     for posi in range(1000):
@@ -304,13 +296,13 @@ if __name__ == "__main__":
     wave_elevation_with_x=[]
     wave_height=1.5
     wave_period=10
-   
+
     for item in water_d:
         wave_elevation_with_time.append([Airywave(wave_height,wave_period,item,0).get_elevation(np.array([0,0,0]),i) for i in time_slice])
         wave_elevation_with_x.append(Airywave(wave_height,wave_period,item,0).get_elevation_at_nodes(space_slice,0))
-    
+
     plt.figure()
-    
+
     ax = plt.subplot(gs[0, 0])
     for item in water_d:
         plt.plot(time_slice,wave_elevation_with_time[water_d.index(item)],label= "Depth "+str(item))
@@ -320,7 +312,7 @@ if __name__ == "__main__":
     plt.ylim(-3,3)
     plt.grid(True)
     plt.legend()
-            
+
     ax = plt.subplot(gs[1,0])
     for item in water_d:
         plt.plot(x_axis,wave_elevation_with_x[water_d.index(item)],label= "Depth "+str(item))
@@ -330,24 +322,23 @@ if __name__ == "__main__":
     plt.ylim(-3,3)
     plt.grid(True)
     plt.legend()
-    
+
     plt.tight_layout()
     plt.savefig('./figures/wave_shape.png', dpi=600)
     # plt.show()
 
 
-    # validation 3 shows the wave velocity and acceleration 
+    ## validation 3 shows the wave velocity and acceleration
     plt.figure()
-    
+
     wave1=Airywave(5,6,60,0,0)
 
     x_list=np.linspace(0,90,10)
     z_list=np.linspace(5,-60,30)
-    
+
     yita_list=[]
     for x in x_axis:
         yita_list.append(wave1.get_elevation(np.array([x,0,0]),0))
-         
 
     posi=[]
     # velo=[]
@@ -360,25 +351,25 @@ if __name__ == "__main__":
     posi=np.array(posi)
     velo=wave1.get_velocity_at_nodes(posi,0)
     acce=wave1.get_acceleration_at_nodes(posi,0)
-    
+
     print("velocity mag is"+str(np.linalg.norm(velo,axis=1)))
     print("acceleration mag is"+str(np.linalg.norm(acce,axis=1)))
 
 
     ax = plt.subplot(gs[0, 0])
     plt.title("velocity")
-    plt.plot(x_axis, yita_list,color="b")   
+    plt.plot(x_axis, yita_list,color="b")
     plt.quiver(posi[:,0],posi[:,2],velo[:,0],velo[:,2])
-        
+
     plt.xlabel("X (m)")
     plt.ylabel("Y (m)")
     plt.xlim(-10, 100)
     plt.ylim(-60,10)
     plt.grid(True)
-            
+
     ax = plt.subplot(gs[1,0])
     plt.title("Acceleration")
-    plt.plot(x_axis, yita_list,color="b")        
+    plt.plot(x_axis, yita_list,color="b")
     plt.quiver(posi[:,0],posi[:,2],acce[:,0],acce[:,2])
 
     plt.xlabel("X (m)")
@@ -386,13 +377,7 @@ if __name__ == "__main__":
     plt.xlim(-10, 100)
     plt.ylim(-60,10)
     plt.grid(True)
-    
+
     plt.tight_layout()
     plt.savefig('./figures/velocityandacceleration.png', dpi=600)
     plt.show()
-    
-    
-    
-    
-    
-    
