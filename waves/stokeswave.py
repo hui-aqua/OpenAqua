@@ -134,55 +134,55 @@ if __name__ == "__main__":
         
         
         
-    # validation 2 shows the wave elevation according to time and space
-    import matplotlib.pyplot as plt
-    import matplotlib.gridspec as gridspec
-    g1=2
-    g2=1
-    gs = gridspec.GridSpec(g1, g2)           # Create 1x2 sub plots
+    # # validation 2 shows the wave elevation according to time and space
+    # import matplotlib.pyplot as plt
+    # import matplotlib.gridspec as gridspec
+    # g1=2
+    # g2=1
+    # gs = gridspec.GridSpec(g1, g2)           # Create 1x2 sub plots
     
-    water_d=[10,20,30,40,50,60,80,100,1000]
+    # water_d=[10,20,30,40,50,60,80,100,1000]
     
-    time_slice=np.linspace(0,100,1000)
-    wave_elevation_with_time=[]
+    # time_slice=np.linspace(0,100,1000)
+    # wave_elevation_with_time=[]
     
-    space_slice=np.ones((1000,3))
-    x_axis=[]
-    for posi in range(1000):
-        space_slice[posi]=[posi/10,0,0]
-        x_axis.append(posi/10)
-    wave_elevation_with_x=[]
-    wave_height=1.5
-    wave_period=6
+    # space_slice=np.ones((1000,3))
+    # x_axis=[]
+    # for posi in range(1000):
+    #     space_slice[posi]=[posi/10,0,0]
+    #     x_axis.append(posi/10)
+    # wave_elevation_with_x=[]
+    # wave_height=1.5
+    # wave_period=6
    
-    for item in water_d:
-        wave_elevation_with_time.append([Stocks2wave(wave_height,wave_period,item,0).get_elevation([0,0,0],i) for i in time_slice])
-        wave_elevation_with_x.append(Stocks2wave(wave_height,wave_period,item,0).get_elevation_at_nodes(space_slice,0))
+    # for item in water_d:
+    #     wave_elevation_with_time.append([Stocks2wave(wave_height,wave_period,item,0).get_elevation([0,0,0],i) for i in time_slice])
+    #     wave_elevation_with_x.append(Stocks2wave(wave_height,wave_period,item,0).get_elevation_at_nodes(space_slice,0))
     
-    plt.figure(figsize=(6.3, 4.0))
+    # plt.figure(figsize=(6.3, 4.0))
     
-    ax = plt.subplot(gs[0, 0])
-    for item in water_d:
-        plt.plot(time_slice,wave_elevation_with_time[water_d.index(item)],label= "Depth "+str(item))
-    plt.xlabel("Time (s)")
-    plt.ylabel("Wave elevation (m)")
-    plt.xlim(0, 100)
-    plt.ylim(-3,3)
-    plt.grid(True)
-    plt.legend()
+    # ax = plt.subplot(gs[0, 0])
+    # for item in water_d:
+    #     plt.plot(time_slice,wave_elevation_with_time[water_d.index(item)],label= "Depth "+str(item))
+    # plt.xlabel("Time (s)")
+    # plt.ylabel("Wave elevation (m)")
+    # plt.xlim(0, 100)
+    # plt.ylim(-3,3)
+    # plt.grid(True)
+    # plt.legend()
             
-    ax = plt.subplot(gs[1,0])
-    for item in water_d:
-        plt.plot(x_axis,wave_elevation_with_x[water_d.index(item)],label= "Depth "+str(item))
-    plt.xlabel("X (m)")
-    plt.ylabel("Wave elevation (m)")
-    plt.xlim(0, 100)
-    plt.ylim(-3,3)
-    plt.grid(True)
-    plt.legend()
+    # ax = plt.subplot(gs[1,0])
+    # for item in water_d:
+    #     plt.plot(x_axis,wave_elevation_with_x[water_d.index(item)],label= "Depth "+str(item))
+    # plt.xlabel("X (m)")
+    # plt.ylabel("Wave elevation (m)")
+    # plt.xlim(0, 100)
+    # plt.ylim(-3,3)
+    # plt.grid(True)
+    # plt.legend()
     
-    plt.tight_layout()
-    plt.show()
+    # plt.tight_layout()
+    # plt.show()
     
     
     

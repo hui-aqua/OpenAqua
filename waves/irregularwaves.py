@@ -9,7 +9,7 @@ class irregular_sea:
     The default wave spectra is JONSWAP 
     """
 
-    def __init__(self, significant_wave_height, peak_period, gamma):    
+    def __init__(self, significant_wave_height, peak_period, gamma, water_depth, wave_direction):    
         self.tp=peak_period
         self.hs=significant_wave_height
         self.list_of_waves=[]
@@ -23,7 +23,7 @@ class irregular_sea:
         list_xi=np.sqrt(2*d_fre*design_wave_spectra)
         for index, item in enumerate(list_xi):
             wave_period=2*np.pi/fre_range[index]
-            self.list_of_waves.append(wave.Airywave(item*2,wave_period,60,0,np.random.uniform(0,180)))
+            self.list_of_waves.append(wave.Airywave(item*2, wave_period, water_depth, wave_direction, np.random.uniform(0,180)))
         
 
     def __str__(self):
@@ -67,7 +67,14 @@ class irregular_sea:
         node_velocity=np.zeros((len(self.list_of_waves),len(list_of_point),3))
         for index, wach_wave in enumerate(self.list_of_waves):
             node_velocity[index]=wach_wave.get_velocity_at_nodes(list_of_point,global_time)
-        return np.sum(node_velocity,axis=0)
+        # print(np.sum(node_velocity,axis=0))
+        # print(np.sum(node_velocity,axis=0).shape)
+        velo=np.sum(node_velocity,axis=0)
+        np.where(velo<10,velo,0)
+        print(np.where(velo<10, velo, 0))
+        print(np.where(velo<10, velo, 0).shape)
+        
+        return np.where(velo<10, velo,0)
 
     def get_acceleration_at_nodes(self, list_of_point, global_time):
         """
@@ -85,8 +92,10 @@ class irregular_sea:
 
 if __name__ == "__main__":   
     import matplotlib.pyplot as plt
+    import matplotlib.cm as cm
+    plt.rcParams['image.cmap'] = 'summer'
 
-    sea_state=irregular_sea(4,8,3)
+    sea_state=irregular_sea(4,8,3,60,45)
     print(sea_state)
     time_max = 3600 # [s]
     dt=0.1
@@ -98,23 +107,39 @@ if __name__ == "__main__":
     # print(np.std(yita))  
     # plt.plot(time_frame,yita)
     
-    x_axis=np.array(np.arange(0,50,1)).tolist()
-    position=np.zeros((len(x_axis),3))
-    for i in range(5):
+    x_axis=np.array(np.arange(0,60,2)).tolist()
+    position=np.zeros((10*len(x_axis),3))
+    for i in range(10):
         for index, item in enumerate(x_axis):
-            position[index]=[10*i,5,-item]
-        # print(position)        
-        velocity=sea_state.get_velocity_at_nodes(position, 20000)
-        ax.quiver(position[:,0], 
-              position[:,1],
-              position[:,2],
-              velocity[:,0],
-              velocity[:,1],
-              velocity[:,2],
-              length=3, normalize=True,color="r")
-    
-    
-    for i in range(8):
+            position[i*len(x_axis)+index]=[6*i,6*i,-item/2]
+    print(position.shape)        
+    velocity=sea_state.get_velocity_at_nodes(position, 20000)
+
+    velocity_mag=[]
+    for each in velocity:
+        velocity_mag.append(np.linalg.norm(each))
+    print(velocity_mag)
+    # Flatten and normalize
+    velocity_mag=np.array(velocity_mag)
+    normal_velo = (velocity_mag.ravel() - velocity_mag.min()) / velocity_mag.ptp()
+    print(normal_velo)
+    # Repeat for each body line and two head lines
+    c = np.concatenate((normal_velo, np.repeat(normal_velo, 2)))
+    # Colormap
+    c = plt.cm.summer(c)
+    q=ax.quiver(position[:,0], 
+                position[:,1],
+                position[:,2],
+                velocity[:,0],
+                velocity[:,1],
+                velocity[:,2],
+                colors=c,
+                normalize=False,
+                )
+    # q.set_array(np.linspace(0,2,10))
+    fig.colorbar(q)
+
+    for i in range(60):
         position=np.zeros((len(x_axis),3))
         for index, item in enumerate(x_axis):
             position[index]=[item,i,0]    
@@ -123,11 +148,12 @@ if __name__ == "__main__":
     
 
     # plt.plot(x_axis,yita)
+    ax.set_title("JONSWAP sea condition Hs=4m, Tp=8s r=3 ")
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    ax.set_xlim(0, 50)
-    ax.set_ylim(0, 10)
-    ax.set_zlim(-60, 5)
+    ax.set_xlim(0, 60)
+    ax.set_ylim(0, 60)
+    ax.set_zlim(-30, 5)
     plt.savefig('./figures/waves.png', dpi=600)
-    # plt.show()
+    plt.show()

@@ -86,9 +86,12 @@ class Airywave:
         """
         zeta = self.wave_k * (position[0]*np.cos(self.wave_beta)+position[1]*np.sin(self.wave_beta)) -self.omega* global_time +self.wave_theta
         yita = self.get_elevation(position, global_time)
+        # wheeler streching method
+        z_streched=(position[2]-self.wave_Height/2)/(1+self.wave_Height/2/self.water_Depth)
+        # z_streched=position[2]
         if position[2] < yita:
-            horizonvelocity = self.pi_h_t * np.cosh(self.wave_k * (position[2] + self.water_Depth)) * np.cos(zeta) / np.sinh(self.wave_k * self.water_Depth)
-            vericalvelocity = self.pi_h_t * np.sinh(self.wave_k * (position[2] + self.water_Depth)) * np.sin(zeta) / np.sinh(self.wave_k * self.water_Depth)
+            horizonvelocity = self.pi_h_t * np.cosh(self.wave_k * (z_streched + self.water_Depth)) * np.cos(zeta) / np.sinh(self.wave_k * self.water_Depth)
+            vericalvelocity = self.pi_h_t * np.sinh(self.wave_k * (z_streched + self.water_Depth)) * np.sin(zeta) / np.sinh(self.wave_k * self.water_Depth)
         else:
             horizonvelocity = 0.0
             vericalvelocity = 0.0
@@ -97,6 +100,8 @@ class Airywave:
         velo[0] = horizonvelocity*np.cos(self.wave_beta)
         velo[1] = horizonvelocity*np.sin(self.wave_beta)
         velo[2] = vericalvelocity
+        if np.linalg.norm(velo)>5:
+            print("Warning!! Velocity at "+str(position)+ " is very large as "+ str(velo))
         return velo
 
     def get_acceleration(self, position, global_time):
@@ -108,9 +113,12 @@ class Airywave:
 
         zeta = self.wave_k * (position[0]*np.cos(self.wave_beta)+position[1]*np.sin(self.wave_beta)) -self.omega* global_time +self.wave_theta
         yita = self.get_elevation(position, global_time)
+        # wheeler streching method
+        z_streched=(position[2]-self.wave_Height/2)/(1+self.wave_Height/2/self.water_Depth)
+
         if position[2] < yita:
-            horizontalacceleration = self.pi_h_t_2 * np.cosh(self.wave_k * (position[2] + self.water_Depth)) * np.sin(zeta) / np.sinh(self.wave_k * self.water_Depth)
-            vericalaccelateration = -self.pi_h_t_2 * np.sinh(self.wave_k * (position[2] + self.water_Depth)) * np.cos(zeta) / np.sinh(self.wave_k * self.water_Depth)
+            horizontalacceleration = self.pi_h_t_2 * np.cosh(self.wave_k * (z_streched + self.water_Depth)) * np.sin(zeta) / np.sinh(self.wave_k * self.water_Depth)
+            vericalaccelateration = -self.pi_h_t_2 * np.sinh(self.wave_k * (z_streched + self.water_Depth)) * np.cos(zeta) / np.sinh(self.wave_k * self.water_Depth)
         else:
             horizontalacceleration = 0.0
             vericalaccelateration = 0.0
@@ -251,8 +259,6 @@ if __name__ == "__main__":
     
     
     # validation 2 shows the wave elevation according to time and space
-    import matplotlib.pyplot as plt
-    import matplotlib.gridspec as gridspec
     g1=2
     g2=1
     gs = gridspec.GridSpec(g1, g2)           # Create 1x2 sub plots
@@ -275,7 +281,7 @@ if __name__ == "__main__":
         wave_elevation_with_time.append([Airywave(wave_height,wave_period,item,0).get_elevation([0,0,0],i) for i in time_slice])
         wave_elevation_with_x.append(Airywave(wave_height,wave_period,item,0).get_elevation_at_nodes(space_slice,0))
     
-    plt.figure(figsize=(6.3, 4.0))
+    plt.figure()
     
     ax = plt.subplot(gs[0, 0])
     for item in water_d:
@@ -300,7 +306,61 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig('./figures/wave_shape.png', dpi=600)
     # plt.show()
+
+
+    # validation 3 shows the wave velocity and acceleration 
+    plt.figure()
     
+    wave1=Airywave(5,6,60,0,0)
+
+    x_list=np.linspace(0,90,10)
+    z_list=np.linspace(5,-60,30)
+    
+    yita_list=[]
+    for x in x_axis:
+        yita_list.append(wave1.get_elevation([x,0,0],0))
+         
+
+    posi=[]
+    velo=[]
+    acce=[]
+    for x in x_list:
+        for z in z_list:
+            posi.append([x,0,z])
+            velo.append(wave1.get_velocity([x,0,z],0).tolist())
+            acce.append(wave1.get_acceleration([x,0,z],0).tolist())
+    posi=np.array(posi)
+    velo=np.array(velo)
+    acce=np.array(acce)
+    print("velocity mag is"+str(np.linalg.norm(velo,axis=1)))
+    print("acceleration mag is"+str(np.linalg.norm(acce,axis=1)))
+
+
+    ax = plt.subplot(gs[0, 0])
+    plt.title("velocity")
+    plt.plot(x_axis, yita_list,color="b")   
+    plt.quiver(posi[:,0],posi[:,2],velo[:,0],velo[:,2])
+        
+    plt.xlabel("X (m)")
+    plt.ylabel("Y (m)")
+    plt.xlim(-10, 100)
+    plt.ylim(-60,10)
+    plt.grid(True)
+            
+    ax = plt.subplot(gs[1,0])
+    plt.title("Acceleration")
+    plt.plot(x_axis, yita_list,color="b")        
+    plt.quiver(posi[:,0],posi[:,2],acce[:,0],acce[:,2])
+
+    plt.xlabel("X (m)")
+    plt.ylabel("Y (m)")
+    plt.xlim(-10, 100)
+    plt.ylim(-60,10)
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.savefig('./figures/velocityandacceleration.png', dpi=600)
+    # plt.show()
     
     
     

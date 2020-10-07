@@ -14,6 +14,19 @@ In order to use this module, we recommend ``import seacondition as sc`` in the b
 
 reference: 2000linearwavetheory_NTNU.pdf
 """
+import numpy as np
 # from scr.model4aster.waves import Airywave
 import waves.Airywave as Airywave
 # from scr.model4aster.waves import stokeswave
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    yita=2
+    w_d=60
+    z=np.arange(-w_d,0,1)
+    zs=np.arange(-w_d,yita,1)
+    z2=zs-yita/(1+yita/w_d)
+    plt.plot(z,z,label='z')
+    plt.plot(zs,z2,label='z2')
+    plt.legend()
+    
+    plt.show()
