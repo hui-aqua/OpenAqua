@@ -16,7 +16,7 @@ reference: 2000linearwavetheory_NTNU.pdf
 """
 import numpy as np
 # from scr.model4aster.waves import Airywave
-import waves.Airywave as Airywave
+# import waves.Airywave as Airywave
 # from scr.model4aster.waves import stokeswave
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
@@ -28,5 +28,4 @@ if __name__ == "__main__":
     plt.plot(z,z,label='z')
     plt.plot(zs,z2,label='z2')
     plt.legend()
-    
     plt.show()

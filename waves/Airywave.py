@@ -12,13 +12,11 @@ wave direction is x+
 import numpy as np
 from numpy import pi
 
-
 class Airywave:
     """
     Using Airy wave theory      \n
     Ref. DNV GL-RP205 Ver. 2008:P45
-    Linear wave theory:
-    
+    Linear wave theory.
     """
     def __init__(self, waveHeight=1.0, wavePeriod=10, waterDepth=60.0, direction=0, start_phase=0):
         """
@@ -43,14 +41,14 @@ class Airywave:
         for i, a in enumerate(alpha):
             f_omega+=a*pow(omega_ba,i)
         self.wave_Length=self.wave_Period*pow(self.gravity*self.water_Depth,0.5)*pow(f_omega/(1+omega_ba*f_omega),0.5)
-        # wave number 
+        # wave number
         self.wave_k = 2*pi/self.wave_Length
-        # angular frequency 
+        # angular frequency
         self.omega = pow(self.gravity * self.wave_k * np.tanh(self.wave_k*self.water_Depth),0.5)
         # phase velocity
         self.wave_phase_velocity=pow(self.gravity/self.wave_k*np.tanh(self.wave_k*self.water_Depth),0.5)
-        
-        ## for easy calculation       
+
+        ## for easy calculation
         self.pi_h_t = pi * waveHeight / wavePeriod
         self.pi_h_l = pi * waveHeight / self.wave_Length
         self.pi_h_t_2 = 2 * waveHeight * pow(pi / wavePeriod, 2)

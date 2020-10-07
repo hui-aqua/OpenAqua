@@ -11,7 +11,7 @@ please email: hui.cheng@uis.no \n
 
 import numpy as np
 from numpy import pi
-import random 
+import random
 
 def pierson_moskowitz_spectra(omega, hs, tp):
     """
@@ -61,18 +61,17 @@ def jonswap_spectra(omega, hs, tp, gamma=3.3, gamma_auto=False):
     sigma[omega > omega_p] = sigma_high
     spectra = a_gamma * pm_spectra * pow(gamma, np.exp(-0.5 * pow((omega - omega_p) / (sigma * omega_p), 2)))
     return spectra
-    
+
 
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
     import matplotlib.gridspec as gridspec
-            
     # # Plot1  wave spectras
     time_max = 3600*2 # [s]
     dt=0.1
     time_frame=np.arange(0,3600,dt)
-    
+
     fre_max=3
     d_fre=2 * pi / time_max
     fre_range=np.arange(d_fre,fre_max,d_fre)
@@ -95,37 +94,37 @@ if __name__ == "__main__":
     plt.savefig('./figures/waveSpectra.png', dpi=600)
     # plt.show()
 
-    
-    # plot 2 
+
+    # plot 2
     import Airywave as aw
     g1=3
     g2=1
     gs = gridspec.GridSpec(g1, g2)           # Create 1x2 sub plots
-    
+
     xi_range=np.sqrt(2*d_fre*jonswap_spectra(fre_range, 4, 8.4, gamma=1.0))
     yita_com=np.zeros((len(xi_range),len(time_frame)))
     yita_com2=np.zeros((len(xi_range),len(time_frame)))
-    
-    
+
+
     space_slice=np.ones((1000,3))
     x_axis=[]
     for posi in range(1000):
         space_slice[posi]=[posi/2,0,0]
         x_axis.append(posi/2)
-    wave_elevation_with_x=np.zeros((len(xi_range),len(x_axis)))   
-    
+    wave_elevation_with_x=np.zeros((len(xi_range),len(x_axis)))
+
     list_of_waves=[]
     for index, each in  enumerate(list(zip(xi_range,fre_range))):
         wave_period=2*pi/each[1]
         list_of_waves.append(aw.Airywave(2*each[0],wave_period,60,0,random.uniform(0,180)))
-        
+
     for index, each in  enumerate(list(zip(xi_range,fre_range))):
         yita_com[index,:]= list_of_waves[index].get_elevations_with_time(np.array([0,0,0]),time_frame)
         yita_com2[index,:]= list_of_waves[index].get_elevations_with_time(np.array([100,0,0]),time_frame)
         # yita_com[index,:]= each[0]*np.cos(each[1]*time_frame-random.uniform(0,2*pi))
         # yita_com2[index,:]= each[0]*np.cos(each[1]*time_frame-random.uniform(0,2*pi))
-    yita=np.sum(yita_com,axis=0)      
-    yita2=np.sum(yita_com2,axis=0)   
+    yita=np.sum(yita_com,axis=0)
+    yita2=np.sum(yita_com2,axis=0)
     print("The maximum elevation is "+str(max(yita)))
     print("The minimum elevation is "+str(min(yita)))
     print("The standard deviation is "+str(np.std(yita)))
@@ -134,11 +133,11 @@ if __name__ == "__main__":
     print("The minimum elevation is "+str(min(yita2)))
     print("The standard deviation is "+str(np.std(yita2)))
 
-    t_ser=np.arange(0,3600,1).tolist()  
-    for t in t_ser:  
+    t_ser=np.arange(0,3600,1).tolist()
+    for t in t_ser:
         for index, each in  enumerate(list(zip(xi_range,fre_range))):
-            wave_elevation_with_x[index,:]=list_of_waves[index].get_elevation_at_nodes(space_slice,t)   
-        wave_elevation=np.sum(wave_elevation_with_x,axis=0)   
+            wave_elevation_with_x[index,:]=list_of_waves[index].get_elevation_at_nodes(space_slice,t)
+        wave_elevation=np.sum(wave_elevation_with_x,axis=0)
 
 
         plt.figure(figsize=(16, 9))
@@ -172,6 +171,3 @@ if __name__ == "__main__":
 
         print("time is "+str(t))
         plt.savefig('./figures/waveElevations_'+str(t)+'.png', dpi=300)
-        
-
-
