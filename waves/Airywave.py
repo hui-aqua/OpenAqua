@@ -56,6 +56,9 @@ class Airywave:
         self.pi_h_t_2 = 2 * waveHeight * pow(pi / wavePeriod, 2)
 
     def __str__(self):
+        """
+        Print the information of object
+        """
         s0 = 'The environment is airy wave condition and the specific parameters are:\n'
         s1 = 'water Depth= ' + str(self.water_Depth) + ' m\n'
         s2 = 'wave Period= ' + str(self.wave_Period) + ' s\n'
@@ -66,17 +69,31 @@ class Airywave:
         S = s0 + s1 + s2 + s3 + s4 + s5 + s6
         return S
 
+    def calc_zeta_instantaneous(self, position, global_time):
+        """
+        A private function. \n
+        :param position: [np.array].shape=(n,3) or [np.array].shape=(n,2) coordinates Unit: [m]. \n The coordinate of the point which you want to know the wave surface elevation. can be [x,y] or [x,y,z]
+        :param global_time: [float] Unit: [s].
+        :return: [float] Unit: [m]. The sea surface level in Z direction. At the targeted position.
+        """
+        if len(position.shape) ==1:
+            # only one point
+            return self.wave_k * (position[0] * np.cos(self.wave_beta) + position[1] * np.sin(self.wave_beta)) - self.omega * global_time + self.wave_theta
+        elif len(position.shape) ==2:
+            # a list of point
+            return self.wave_k * (position[:,0] * np.cos(self.wave_beta) + position[:,1] * np.sin(self.wave_beta)) - self.omega * global_time + self.wave_theta
+
+
     def get_elevation(self, position, global_time):
         """
         A private function. \n
         :param position: [np.array].shape=(1,3) coordinates Unit: [m]. The position of the point which you want to know the wave surface elevation.
         :param global_time: [float] Unit: [s].
-        :return: [float] Unit: [m]. The sea surface level in Z direction. At the targeted position.
+        :return: scale or [np.array].shape=(n,) Unit: [m]. The sea surface level in Z direction.
         """
-        zeta = self.wave_k * (position[0]*np.cos(self.wave_beta)+position[1]*np.sin(self.wave_beta)) - self.omega * global_time + self.wave_theta
-        yita = self.wave_Height / 2 * np.cos(zeta)
+        zeta=self.calc_zeta_instantaneous(position, global_time)
         # print("yita is "+str(yita))
-        return yita
+        return self.wave_Height / 2 * np.cos(zeta)
 
     def get_velocity(self, position, global_time):
         """
@@ -84,8 +101,8 @@ class Airywave:
         :param global_time: [float] Unit: [s]. The time which you want to know the wave velocity
         :return:  [np.array].shape=(1,3) Unit: [m/s]. A numpy array of the velocity at the targeted point.
         """
-        zeta = self.wave_k * (position[0]*np.cos(self.wave_beta)+position[1]*np.sin(self.wave_beta)) -self.omega* global_time +self.wave_theta
-        yita = self.get_elevation(position, global_time)
+        zeta=self.calc_zeta_instantaneous(position, global_time)
+        yita=self.get_elevation(position, global_time)
         # wheeler streching method
         z_streched=(position[2]-self.wave_Height/2)/(1+self.wave_Height/2/self.water_Depth)
         # z_streched=position[2]
@@ -110,9 +127,8 @@ class Airywave:
         :param global_time: [float] Unit: [s]. The time which you want to know the wave velocity
         :return: [np.array].shape=(1,3) Unit: [m/s]. A numpy array of the acceleration at the targeted point.
         """
-
-        zeta = self.wave_k * (position[0]*np.cos(self.wave_beta)+position[1]*np.sin(self.wave_beta)) -self.omega* global_time +self.wave_theta
-        yita = self.get_elevation(position, global_time)
+        zeta=self.calc_zeta_instantaneous(position, global_time)
+        yita=self.get_elevation(position, global_time)
         # wheeler streching method
         z_streched=(position[2]-self.wave_Height/2)/(1+self.wave_Height/2/self.water_Depth)
 
@@ -145,10 +161,7 @@ class Airywave:
         :param global_time: time [s] \n
         :return: Get a list of elevation at a list of point \n
         """
-        list_of_elevation = []
-        for point in list_of_point:
-            list_of_elevation.append(self.get_elevation(point, global_time))
-        return list_of_elevation   
+        return self.get_elevation(list_of_point, global_time)
 
     def get_velocity_at_nodes(self, list_of_point, global_time):
         """
@@ -157,12 +170,20 @@ class Airywave:
         :param global_time: [float] Unit: [s]. Physical time.
         :return: Get a list of velocity at a list of point\n
         """
-        list_of_velocity = np.zeros((len(list_of_point),3))
-        index=0
-        for point in list_of_point:
-            list_of_velocity[index] = self.get_velocity(point, global_time)
-            index+=1
-        return list_of_velocity
+        zeta=self.calc_zeta_instantaneous(list_of_point, global_time)
+        yita=self.get_elevation(list_of_point, global_time)
+        # wheeler streching method
+        z_streched=(list_of_point[:,2]-self.wave_Height/2)/(1+self.wave_Height/2/self.water_Depth)
+        # z_streched=position[2]
+        velo = np.zeros((len(list_of_point),3))
+        velo[:,0] = np.cos(self.wave_beta) * self.pi_h_t * np.cosh(self.wave_k * (z_streched + self.water_Depth)) * np.cos(zeta) / np.sinh(self.wave_k * self.water_Depth)
+        velo[:,1] = np.cos(self.wave_beta) * self.pi_h_t * np.cosh(self.wave_k * (z_streched + self.water_Depth)) * np.cos(zeta) / np.sinh(self.wave_k * self.water_Depth)
+        velo[:,2] = self.pi_h_t * np.sinh(self.wave_k * (z_streched + self.water_Depth)) * np.sin(zeta) / np.sinh(self.wave_k * self.water_Depth)
+        for i in range(len(list_of_point)):
+            if list_of_point[i,2] > yita[i]:
+                # print("hh")
+                velo[i]=0.0
+        return velo
     
     def get_acceleration_at_nodes(self, list_of_point, global_time):
         """
@@ -171,13 +192,22 @@ class Airywave:
         :param global_time: time [s] \n
         :return: Get a list of acceleration at a list of point \n
         """
-        list_of_acceleration = np.zeros((len(list_of_point),3))
-        index=0
-        for point in list_of_point:
-            list_of_acceleration[index]=self.get_acceleration(point, global_time)
-            index+=1
-        return list_of_acceleration   
+        zeta=self.calc_zeta_instantaneous(list_of_point, global_time)
+        yita=self.get_elevation(list_of_point, global_time)
+        # wheeler streching method      
+        z_streched=(list_of_point[:,2]-self.wave_Height/2)/(1+self.wave_Height/2/self.water_Depth)
+        # z_streched=position[2]
+        acce = np.zeros((len(list_of_point),3))
+        acce[:,0] = np.cos(self.wave_beta) * self.pi_h_t_2 * np.cosh(self.wave_k * (z_streched + self.water_Depth)) * np.sin(zeta) / np.sinh(self.wave_k * self.water_Depth)
+        acce[:,1] = np.cos(self.wave_beta) * self.pi_h_t_2 * np.cosh(self.wave_k * (z_streched + self.water_Depth)) * np.sin(zeta) / np.sinh(self.wave_k * self.water_Depth)
+        acce[:,2] = -self.pi_h_t_2 * np.sinh(self.wave_k * (z_streched + self.water_Depth)) * np.cos(zeta) / np.sinh(self.wave_k * self.water_Depth)
+        for i in range(len(list_of_point)):
+            if list_of_point[i,2] > yita[i]:
+                acce[i]=0.0
+        return acce
    
+
+
     def get_velocity_at_elements(self, position_nodes, elements, global_time):
         """
         :param position_nodes: a numpy list of position \n
@@ -278,7 +308,7 @@ if __name__ == "__main__":
     wave_period=10
    
     for item in water_d:
-        wave_elevation_with_time.append([Airywave(wave_height,wave_period,item,0).get_elevation([0,0,0],i) for i in time_slice])
+        wave_elevation_with_time.append([Airywave(wave_height,wave_period,item,0).get_elevation(np.array([0,0,0]),i) for i in time_slice])
         wave_elevation_with_x.append(Airywave(wave_height,wave_period,item,0).get_elevation_at_nodes(space_slice,0))
     
     plt.figure()
@@ -318,20 +348,21 @@ if __name__ == "__main__":
     
     yita_list=[]
     for x in x_axis:
-        yita_list.append(wave1.get_elevation([x,0,0],0))
+        yita_list.append(wave1.get_elevation(np.array([x,0,0]),0))
          
 
     posi=[]
-    velo=[]
-    acce=[]
+    # velo=[]
+    # acce=[]
     for x in x_list:
         for z in z_list:
             posi.append([x,0,z])
-            velo.append(wave1.get_velocity([x,0,z],0).tolist())
-            acce.append(wave1.get_acceleration([x,0,z],0).tolist())
+            # velo.append(wave1.get_velocity(np.array([x,0,z]),0).tolist())
+            # acce.append(wave1.get_acceleration(np.array([x,0,z]),0).tolist())
     posi=np.array(posi)
-    velo=np.array(velo)
-    acce=np.array(acce)
+    velo=wave1.get_velocity_at_nodes(posi,0)
+    acce=wave1.get_acceleration_at_nodes(posi,0)
+    
     print("velocity mag is"+str(np.linalg.norm(velo,axis=1)))
     print("acceleration mag is"+str(np.linalg.norm(acce,axis=1)))
 
@@ -360,7 +391,7 @@ if __name__ == "__main__":
     
     plt.tight_layout()
     plt.savefig('./figures/velocityandacceleration.png', dpi=600)
-    # plt.show()
+    plt.show()
     
     
     

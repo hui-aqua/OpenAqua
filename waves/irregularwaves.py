@@ -69,11 +69,12 @@ class irregular_sea:
             node_velocity[index]=wach_wave.get_velocity_at_nodes(list_of_point,global_time)
         # print(np.sum(node_velocity,axis=0))
         # print(np.sum(node_velocity,axis=0).shape)
+        # return np.sum(node_velocity,axis=0)
         velo=np.sum(node_velocity,axis=0)
-        np.where(velo<10,velo,0)
-        print(np.where(velo<10, velo, 0))
-        print(np.where(velo<10, velo, 0).shape)
-        
+        # np.where(velo<10,velo,0)
+        print(np.where(velo<10, velo, 0)) 
+        # replace the value larger than 10 with 0
+        # print(np.where(velo<10, velo, 0).shape)
         return np.where(velo<10, velo,0)
 
     def get_acceleration_at_nodes(self, list_of_point, global_time):
@@ -108,11 +109,12 @@ if __name__ == "__main__":
     # plt.plot(time_frame,yita)
     
     x_axis=np.array(np.arange(0,60,2)).tolist()
-    position=np.zeros((10*len(x_axis),3))
-    for i in range(10):
+    position=np.zeros((5*len(x_axis),3))
+    for i in range(5):
         for index, item in enumerate(x_axis):
             position[i*len(x_axis)+index]=[6*i,6*i,-item/2]
-    print(position.shape)        
+    print(position.shape)   
+    print(position)     
     velocity=sea_state.get_velocity_at_nodes(position, 20000)
 
     velocity_mag=[]
@@ -122,7 +124,7 @@ if __name__ == "__main__":
     # Flatten and normalize
     velocity_mag=np.array(velocity_mag)
     normal_velo = (velocity_mag.ravel() - velocity_mag.min()) / velocity_mag.ptp()
-    print(normal_velo)
+    # print(normal_velo)
     # Repeat for each body line and two head lines
     c = np.concatenate((normal_velo, np.repeat(normal_velo, 2)))
     # Colormap

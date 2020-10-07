@@ -120,8 +120,8 @@ if __name__ == "__main__":
         list_of_waves.append(aw.Airywave(2*each[0],wave_period,60,0,random.uniform(0,180)))
         
     for index, each in  enumerate(list(zip(xi_range,fre_range))):
-        yita_com[index,:]= list_of_waves[index].get_elevations_with_time([0,0,0],time_frame)
-        yita_com2[index,:]= list_of_waves[index].get_elevations_with_time([100,0,0],time_frame)
+        yita_com[index,:]= list_of_waves[index].get_elevations_with_time(np.array([0,0,0]),time_frame)
+        yita_com2[index,:]= list_of_waves[index].get_elevations_with_time(np.array([100,0,0]),time_frame)
         # yita_com[index,:]= each[0]*np.cos(each[1]*time_frame-random.uniform(0,2*pi))
         # yita_com2[index,:]= each[0]*np.cos(each[1]*time_frame-random.uniform(0,2*pi))
     yita=np.sum(yita_com,axis=0)      
