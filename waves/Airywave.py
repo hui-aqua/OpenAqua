@@ -331,7 +331,7 @@ if __name__ == "__main__":
     ## validation 3 shows the wave velocity and acceleration
     plt.figure()
 
-    wave1=Airywave(5,6,60,0,0)
+    wave1=Airywave(5,8,10,0,0)
 
     x_list=np.linspace(0,90,10)
     z_list=np.linspace(5,-60,30)
@@ -352,8 +352,8 @@ if __name__ == "__main__":
     velo=wave1.get_velocity_at_nodes(posi,0)
     acce=wave1.get_acceleration_at_nodes(posi,0)
 
-    print("velocity mag is"+str(np.linalg.norm(velo,axis=1)))
-    print("acceleration mag is"+str(np.linalg.norm(acce,axis=1)))
+    print("maximum velocity mag is "+str(np.max(np.linalg.norm(velo,axis=1))))
+    # print("acceleration mag is"+str(np.linalg.norm(acce,axis=1)))
 
 
     ax = plt.subplot(gs[0, 0])
