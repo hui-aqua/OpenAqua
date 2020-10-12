@@ -32,7 +32,7 @@ class irregular_sea:
         list_xi=np.sqrt(2*d_fre*design_wave_spectra)
         for index, item in enumerate(list_xi):
             wave_period=2*np.pi/fre_range[index]
-            self.list_of_waves.append(wave.Airywave(item*2, wave_period, water_depth, wave_direction, np.random.uniform(0,180)))
+            self.list_of_waves.append(wave.Airywave(item*2, wave_period, water_depth, wave_direction, np.random.uniform(0,360)))
 
     def __str__(self):
         """ Print the information of the present object. """
@@ -54,6 +54,18 @@ class irregular_sea:
             wave_elevations[index]=wach_wave.get_elevation(position,time_list)
         return np.sum(wave_elevations,axis=0)
 
+    def get_velocity_with_time(self, position, time_list):
+        """
+        Public function.\n
+        :param position: [np.array].shape=(n,3) Unit: [m]. The position of one node
+        :param time_list: [np.array].shape=(n,1) | Uint: [s]. The time sequence for geting the elevations \n
+        :return: Get a list of elevations at one position with a time squence \n
+        """
+        waves_velocities=np.zeros((len(self.list_of_waves),len(time_list),3))
+        for index, each_wave in enumerate(self.list_of_waves):
+            waves_velocities[index]=each_wave.get_velocity_with_time(position,time_list)
+        return np.sum(waves_velocities,axis=0)
+    
     def get_elevation_at_nodes(self, list_of_point, global_time):
         """
         Public function.\n
@@ -86,7 +98,6 @@ class irregular_sea:
         # print(np.where(velo<10, velo, 0).shape)
         return velo
 
-
     def get_acceleration_at_nodes(self, list_of_point, global_time):
         """
         Public function.\n
@@ -101,41 +112,56 @@ class irregular_sea:
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+    import matplotlib.gridspec as gridspec
     plt.rcParams['image.cmap'] = 'summer'
 
-    sea_state=irregular_sea(4,8,3,60,45)
+    sea_state=irregular_sea(4,8,3,600,0)
     time_max = 3600 # [s]
     dt=0.1
     time_frame=np.arange(0, time_max, dt)
     print(sea_state)
+
+    g1 = 2
+    g2 = 1
+    gs = gridspec.GridSpec(g1, g2)  # Create 1x2 sub plots
     plt.figure()
+    ax = plt.subplot(gs[0, 0])
     plt.title("surface elvation with time at position x=0,y=0")
     plt.plot(time_frame, sea_state.get_elevations_with_time(np.array([0,0,0]),time_frame))
     plt.xlabel("time (s)")
     plt.ylabel("surface elevation (m)")
     plt.xlim(0, 3600)
     plt.ylim(-5, 5)
+
+    ax = plt.subplot(gs[1, 0])
+    plt.title("velocity with time at position x=0,y=0")
+    plt.plot(time_frame, sea_state.get_velocity_with_time(np.array([0,0,0]),time_frame))
+    plt.xlabel("time (s)")
+    plt.ylabel("velocity (m/s)")
+    plt.xlim(0, 3600)
+    plt.ylim(-5, 5)
     plt.tight_layout()
-    plt.show()
-    
+    print("hs is "+ str(4*np.var(sea_state.get_elevations_with_time(np.array([0,0,0]),time_frame))))
+
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     # time_frame=np.arange(1000,4600,dt)
     # yita=sea_state.get_elevations_with_time([0,0,0],time_frame)
     # print(np.std(yita))
     # plt.plot(time_frame,yita)
-    x_axis=np.array(np.arange(0,60,2)).tolist()
+    x_axis=np.array(np.arange(-10,10,1.1)).tolist()
     position=np.zeros((10*len(x_axis),3))
     for i in range(10):
         for index, item in enumerate(x_axis):
-            position[i*len(x_axis)+index]=[6*i,6*i,-item/2]
+            position[i*len(x_axis)+index]=[6*i,6*i,-float(item)/2]
     # print(position.shape)
     # print(position)
-    velocity=sea_state.get_velocity_at_nodes(position, 500)
+    velocity=sea_state.get_velocity_at_nodes(position, 0)
     velocity_mag=[]
     for each in velocity:
         velocity_mag.append(np.linalg.norm(each))
     print("max velocity is " +str(max(velocity_mag)) + " m/s")
+    print("and the position is "+str(position[velocity_mag.index(max(velocity_mag))]))
     # Flatten and normalize
     velocity_mag=np.array(velocity_mag)
     normal_velo = (velocity_mag.ravel() - velocity_mag.min()) / velocity_mag.ptp()
@@ -160,11 +186,11 @@ if __name__ == "__main__":
         position=np.zeros((len(x_axis),3))
         for index, item in enumerate(x_axis):
             position[index]=[item,i,0]
-        yita=sea_state.get_elevation_at_nodes(position, 500)
+        yita=sea_state.get_elevation_at_nodes(position, 0)
         ax.plot(x_axis,[i]*len(x_axis),yita,color="b")
 
     # plt.plot(x_axis,yita)
-    ax.set_title("JONSWAP sea condition Hs=4m, Tp=8s r=3, t="+str(500)+"s")
+    ax.set_title("JONSWAP sea condition Hs=4m, Tp=8s r=3, t="+str(0)+"s")
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
