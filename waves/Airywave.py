@@ -112,7 +112,7 @@ class Airywave:
         for i in range(len(eta)):
             if position[2] > eta[i]:
                 velocity[i] = 0.0
-  
+
         # if position[2] < eta:
         #     horizontal_velocity = self.pi_h_t * np.cosh(self.wave_k * (z_wheeler + self.water_Depth)) * np.cos(theta) / np.sinh(self.wave_k * self.water_Depth)
         #     vertical_velocity = self.pi_h_t * np.sinh(self.wave_k * (z_wheeler + self.water_Depth)) * np.sin(theta) / np.sinh(self.wave_k * self.water_Depth)
@@ -127,7 +127,7 @@ class Airywave:
         #     print("Warning!! Velocity at " + str(position) + " is very large as " + str(velocity))
         return velocity
 
-    def get_acceleration(self, position, global_time):
+    def get_acceleration_with_time(self, position, global_time):
         """
         :param position: [np.array].shape=(1,3) | Unit: [m]. The position of the point which you want to know the wave acceleration.
         :param global_time: [float] Unit: [s]. The time which you want to know the wave velocity
@@ -136,20 +136,18 @@ class Airywave:
         theta = self.calc_theta(position, global_time)
         eta = self.get_elevation(position, global_time)
         # wheeler's method
-        z_wheeler = (position[2] - self.wave_Height / 2) / (1 + self.wave_Height / 2 / self.water_Depth)
-
-        if position[2] < eta:
-            horizontal_acceleration = self.pi_h_t_2 * np.cosh(self.wave_k * (z_wheeler + self.water_Depth)) * np.sin(
-                theta) / np.sinh(self.wave_k * self.water_Depth)
-            vertical_acceleration = -self.pi_h_t_2 * np.sinh(self.wave_k * (z_wheeler + self.water_Depth)) * np.cos(
-                theta) / np.sinh(self.wave_k * self.water_Depth)
-        else:
-            horizontal_acceleration = 0.0
-            vertical_acceleration = 0.0
-        acceleration = np.array([0.0, 0.0, 0.0])
-        acceleration[0] = horizontal_acceleration * np.cos(self.wave_beta)
-        acceleration[1] = horizontal_acceleration * np.sin(self.wave_beta)
-        acceleration[2] = vertical_acceleration
+        z_streched = (position[2] - self.wave_Height / 2) / (1 + self.wave_Height / 2 / self.water_Depth)
+        # z_streched=position[2]
+        acceleration = np.zeros((len(global_time), 3))
+        acceleration[:, 0] = np.cos(self.wave_beta) * self.pi_h_t_2 * np.cosh(
+            self.wave_k * (z_streched + self.water_Depth)) * np.sin(theta) / np.sinh(self.wave_k * self.water_Depth)
+        acceleration[:, 1] = np.sin(self.wave_beta) * self.pi_h_t_2 * np.cosh(
+            self.wave_k * (z_streched + self.water_Depth)) * np.sin(theta) / np.sinh(self.wave_k * self.water_Depth)
+        acceleration[:, 2] = -self.pi_h_t_2 * np.sinh(self.wave_k * (z_streched + self.water_Depth)) * np.cos(theta) / np.sinh(
+            self.wave_k * self.water_Depth)
+        for i in range(len(global_time)):
+            if position[2] > eta[i]:
+                acceleration[i] = 0.0
         return acceleration
 
     def get_elevations_with_time(self, position, time_list):
@@ -188,9 +186,9 @@ class Airywave:
         velocity[:, 0] = np.cos(self.wave_beta) * self.pi_h_t * np.cosh(self.wave_k * (z_wheeler + self.water_Depth)) * np.cos(theta) / np.sinh(self.wave_k * self.water_Depth)
         velocity[:, 1] = np.sin(self.wave_beta) * self.pi_h_t * np.cosh(self.wave_k * (z_wheeler + self.water_Depth)) * np.cos(theta) / np.sinh(self.wave_k * self.water_Depth)
         velocity[:, 2] =                          self.pi_h_t * np.sinh(self.wave_k * (z_wheeler + self.water_Depth)) * np.sin(theta) / np.sinh(self.wave_k * self.water_Depth)
-        for i in range(len(list_of_point)):
-            if list_of_point[i, 2] > eta[i]:
-                velocity[i] = 0.0
+        # for i in range(len(list_of_point)):
+        #     if list_of_point[i, 2] > eta[i]:
+        #         velocity[i] = 0.0
             # elif np.linalg.norm(velocity[i]) >0.1:
             #     print(np.linalg.norm(velocity[i]))
             #     print(list_of_point[i])
@@ -307,26 +305,26 @@ if __name__ == "__main__":
     water_d = [10, 20, 30, 40, 50, 60, 80, 100, 1000]
 
     time_slice = np.linspace(0, 100, 1000)
-    wave_elevation_with_time = []
+    velocities_with_time = []
 
     space_slice = np.ones((1000, 3))
     x_axis = []
     for posi in range(1000):
         space_slice[posi] = [posi / 2, 0, 0]
         x_axis.append(posi / 2)
-    wave_elevation_with_x = []
+    elevation_with_time = []
     wave_height = 1.5
     wave_period = 10
 
     for item in water_d:
-        wave_elevation_with_time.append(
-            [Airywave(wave_height, wave_period, item, 0).get_elevation(np.array([0, 0, 0]), i) for i in time_slice])
-        wave_elevation_with_x.append(Airywave(wave_height, wave_period, item, 0).get_elevation_at_nodes(space_slice, 0))
+        velocities_with_time.append([Airywave(wave_height, wave_period, item, 0).get_elevation(np.array([0, 0, 0]), i) for i in time_slice])
+        elevation_with_time.append(Airywave(wave_height, wave_period, item, 0).get_elevation_at_nodes(space_slice, 0))
     plt.figure()
 
     ax = plt.subplot(gs[0, 0])
+    plt.title("wave elevation at x=0,y=0")
     for item in water_d:
-        plt.plot(time_slice, wave_elevation_with_time[water_d.index(item)], label="Depth " + str(item))
+        plt.plot(time_slice, velocities_with_time[water_d.index(item)], label="Depth " + str(item))
     plt.xlabel("Time (s)")
     plt.ylabel("Wave elevation (m)")
     plt.xlim(0, 100)
@@ -335,20 +333,77 @@ if __name__ == "__main__":
     plt.legend()
 
     ax = plt.subplot(gs[1, 0])
+    plt.title("wave elevation when t=0")
     for item in water_d:
-        plt.plot(x_axis, wave_elevation_with_x[water_d.index(item)], label="Depth " + str(item))
+        plt.plot(x_axis, elevation_with_time[water_d.index(item)], label="Depth " + str(item))
     plt.xlabel("X (m)")
     plt.ylabel("Wave elevation (m)")
     plt.xlim(0, 500)
     plt.ylim(-3, 3)
     plt.grid(True)
-    plt.legend()
+    # plt.legend()
 
     plt.tight_layout()
     plt.savefig('./figures/wave_shape.png', dpi=600)
     # plt.show()
 
-    ## validation 3 shows the wave velocity and acceleration
+
+    ## validation 3 shows the wave velocity  according to time and space
+    #TODO: error place
+    g1 = 2
+    g2 = 1
+    gs = gridspec.GridSpec(g1, g2)  # Create 1x2 sub plots
+
+    water_d = [10, 20, 30, 40, 50, 60, 80, 100, 1000]
+
+    time_slice = np.linspace(0, 100, 1000)
+    velocities_with_time = []
+    elevation_with_time = []
+    space_slice = np.ones((1000, 3))
+    x_axis = []
+    for posi in range(1000):
+        space_slice[posi] = [posi / 2, 0, 0]
+        x_axis.append(posi / 2)
+
+    wave_height = 1.5
+    wave_period = 10
+
+    for item in water_d:
+        velocities_with_time.append(np.linalg.norm(Airywave(wave_height, wave_period, item, 0).get_velocity_with_time(np.array([0, 0, 0]), time_slice) ,axis=1))
+        elevation_with_time.append( np.linalg.norm(Airywave(wave_height, wave_period, item, 0).get_acceleration_with_time(np.array([0, 0, 0]), time_slice),axis=1))
+    plt.figure()
+
+    ax = plt.subplot(gs[0, 0])
+    plt.title("wave velocity at x=0,y=0")
+    for item in water_d:
+        plt.plot(time_slice, velocities_with_time[water_d.index(item)], label="Depth " + str(item))
+    plt.xlabel("Time (s)")
+    plt.ylabel("Wave velocity (m)")
+    plt.xlim(0, 100)
+    plt.ylim(-3, 3)
+    plt.grid(True)
+    plt.legend()
+
+    ax = plt.subplot(gs[1, 0])
+    plt.title("wave velocity when x=0,y=0")
+    for item in water_d:
+        plt.plot(x_axis, elevation_with_time[water_d.index(item)], label="Depth " + str(item))
+    plt.xlabel("X (m)")
+    plt.ylabel("Time (s)")
+    plt.xlim(0, 500)
+    plt.ylim(-3, 3)
+    plt.grid(True)
+    # plt.legend()
+
+    plt.tight_layout()
+    plt.savefig('./figures/wave_velocity.png', dpi=600)
+    # plt.show()
+
+
+
+
+
+    ## validation 4 shows the wave velocity and acceleration
     plt.figure()
 
     wave1 = Airywave(5, 8, 600, 0, 0)
