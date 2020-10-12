@@ -24,7 +24,7 @@ class irregular_sea:
         self.tp=peak_period
         self.hs=significant_wave_height
         self.list_of_waves=[]
-        time_max=3600*3  # 3h, We assume the simulations will not exceed 3h.
+        time_max=3600*2  # 3h, We assume the simulations will not exceed 3h.
         fre_max=3        # we assume the highest eigenfrequency of studied structure is below 3 Hz.
         d_fre=2 * np.pi / time_max                # get the resolution for frequence
         fre_range=np.arange(d_fre,fre_max,d_fre)
@@ -84,7 +84,8 @@ class irregular_sea:
         # print(np.where(velo<10, velo, 0))
         # replace the value larger than 10 with 0
         # print(np.where(velo<10, velo, 0).shape)
-        return np.where(velo<10, velo,0)
+        return velo
+
 
     def get_acceleration_at_nodes(self, list_of_point, global_time):
         """
@@ -103,10 +104,20 @@ if __name__ == "__main__":
     plt.rcParams['image.cmap'] = 'summer'
 
     sea_state=irregular_sea(4,8,3,60,45)
-    print(sea_state)
     time_max = 3600 # [s]
     dt=0.1
-
+    time_frame=np.arange(0, time_max, dt)
+    print(sea_state)
+    plt.figure()
+    plt.title("surface elvation with time at position x=0,y=0")
+    plt.plot(time_frame, sea_state.get_elevations_with_time(np.array([0,0,0]),time_frame))
+    plt.xlabel("time (s)")
+    plt.ylabel("surface elevation (m)")
+    plt.xlim(0, 3600)
+    plt.ylim(-5, 5)
+    plt.tight_layout()
+    plt.show()
+    
     fig = plt.figure()
     ax = fig.gca(projection='3d')
     # time_frame=np.arange(1000,4600,dt)
@@ -118,13 +129,13 @@ if __name__ == "__main__":
     for i in range(10):
         for index, item in enumerate(x_axis):
             position[i*len(x_axis)+index]=[6*i,6*i,-item/2]
-    print(position.shape)
-    print(position)
-    velocity=sea_state.get_velocity_at_nodes(position, 20000)
+    # print(position.shape)
+    # print(position)
+    velocity=sea_state.get_velocity_at_nodes(position, 500)
     velocity_mag=[]
     for each in velocity:
         velocity_mag.append(np.linalg.norm(each))
-    print(velocity_mag)
+    print("max velocity is " +str(max(velocity_mag)) + " m/s")
     # Flatten and normalize
     velocity_mag=np.array(velocity_mag)
     normal_velo = (velocity_mag.ravel() - velocity_mag.min()) / velocity_mag.ptp()
@@ -149,16 +160,16 @@ if __name__ == "__main__":
         position=np.zeros((len(x_axis),3))
         for index, item in enumerate(x_axis):
             position[index]=[item,i,0]
-        yita=sea_state.get_elevation_at_nodes(position, 20000)
+        yita=sea_state.get_elevation_at_nodes(position, 500)
         ax.plot(x_axis,[i]*len(x_axis),yita,color="b")
 
     # plt.plot(x_axis,yita)
-    ax.set_title("JONSWAP sea condition Hs=4m, Tp=8s r=3 ")
+    ax.set_title("JONSWAP sea condition Hs=4m, Tp=8s r=3, t="+str(500)+"s")
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
     ax.set_xlim(0, 60)
     ax.set_ylim(0, 60)
     ax.set_zlim(-30, 5)
-    plt.savefig('./figures/waves.png', dpi=600)
+    plt.savefig('./figures/waves.png', dpi=300)
     plt.show()

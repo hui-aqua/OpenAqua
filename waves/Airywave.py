@@ -178,8 +178,9 @@ class Airywave:
         velo[:,2] = self.pi_h_t * np.sinh(self.wave_k * (z_streched + self.water_Depth)) * np.sin(zeta) / np.sinh(self.wave_k * self.water_Depth)
         for i in range(len(list_of_point)):
             if list_of_point[i,2] > yita[i]:
-                # print("hh")
                 velo[i]=0.0
+            # elif np.linalg.norm(velo[i]) >0.1:
+            #     print(np.linalg.norm(velo[i]))
         return velo
 
     def get_acceleration_at_nodes(self, list_of_point, global_time):
