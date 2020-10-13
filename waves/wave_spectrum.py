@@ -114,7 +114,7 @@ if __name__ == "__main__":
     list_of_waves = []
     for index, each in enumerate(list(zip(xi_range, fre_range))):
         wave_period = 2*pi/each[1]
-        list_of_waves.append(aw.Airywave(2 * each[0], wave_period, 60, 0, random.uniform(0, 180)))
+        list_of_waves.append(aw.Airywave(2 * each[0], wave_period, 60, 0, random.uniform(0, 360)))
 
     for index, each in enumerate(list(zip(xi_range, fre_range))):
         yita_com[index, :] = list_of_waves[index].get_elevations_with_time(
