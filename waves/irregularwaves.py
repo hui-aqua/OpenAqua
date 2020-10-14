@@ -91,15 +91,17 @@ class irregular_sea:
         node_velocity=np.zeros((len(self.list_of_waves),len(list_of_point),3))
         list_elevation=self.get_elevation_at_nodes(list_of_point, global_time)
         # wheeler streching method
-        list_of_point[:,2] = (list_of_point[:, 2] - list_elevation)*self.water_depth / (self.water_depth + list_elevation)
+        points=list_of_point.copy()
+        points[:,2] = (list_of_point[:, 2] - list_elevation)*self.water_depth / (self.water_depth + list_elevation)
 
         for index, each_wave in enumerate(self.list_of_waves):
-            node_velocity[index]=each_wave.get_velocity_at_nodes(list_of_point,global_time)
+            node_velocity[index]=each_wave.get_velocity_at_nodes(points,global_time)
         velo=np.sum(node_velocity,axis=0)
         # ensure the velocity is zero above the wave elevation
         for index in range(len(list_elevation)):
             if list_of_point[index,2]>list_elevation[index]:
                 velo[index]=0
+        # print("The shape of velocity matirx is "+str(velo.shape))                
         return velo
 
     def get_acceleration_at_nodes(self, list_of_point, global_time):
@@ -142,41 +144,44 @@ if __name__ == "__main__":
     for i in range(20):
         for j in range(30):
             position[i+20*j]=[5*i,0,5.0-j]
+    position.flags.writeable=False            
     position2=np.zeros((100,3))
     for i in range(100):
         position2[i]=[i,0,0]
     plt.figure(figsize=(6.7, 4.5))
-    # for t in time_frame:
-    t=0
-    plt.clf()
-    ax = plt.subplot(gs[0, 0])
-    plt.title("surface elevation with time at position x=0,y=0")
-    plt.plot(time_frame,elevations ,color='k',linewidth=0.5)
-    plt.xlabel("time (s)")
-    plt.ylabel("surface elevation (m)")
-    plt.xlim(0, 3600)
-    plt.ylim(-5, 5)
-    ax = plt.subplot(gs[1, 0])
-    plt.title("serface elevation and velocity at "+str(t)+" s")
-    velocity=sea_state.get_velocity_at_nodes(position,t)
-    plt.text(70,-35,"Maximum velocity "+str(round(max(np.linalg.norm(velocity,axis=1)),2))+" m/s")
-    plt.quiver(position[:,0],
-                position[:,2],
-                velocity[:,0],
-                velocity[:,2],
-                units='xy',
-                scale=0.5,
-                )
-    plt.plot([i for i in range(100)],sea_state.get_elevation_at_nodes(position2,t))
-    plt.plot([0,100],[0,0],color='r',linewidth=0.5)
-    plt.xlabel("X (m)")
-    plt.ylabel("elevation (m)")
-    plt.xlim(0, 100)
-    plt.ylim(-26, 6)
-    # q.set_array(np.linspace(0,2,10))
-    # fig.colorbar(q)
-    plt.tight_layout()
-    plt.savefig('./figures/irrugularwaves_'+str(t)+'.png', dpi=600)
+    for t in time_frame:
+    # t=0
+        plt.clf()
+  
+        ax = plt.subplot(gs[0, 0])
+        plt.title("surface elevation with time at position x=0,y=0")
+        plt.plot(time_frame,elevations ,color='b',linewidth=0.5)
+        plt.xlabel("time (s)")
+        plt.ylabel("surface elevation (m)")
+        plt.xlim(0, 3600)
+        plt.ylim(-5, 5)
+        ax = plt.subplot(gs[1, 0])
+        plt.title("serface elevation and velocity at "+str(t)+" s")
+        velocity=sea_state.get_velocity_at_nodes(position,t)
+        plt.text(65,-35,"Maximum velocity "+str(round(max(np.linalg.norm(velocity,axis=1)),2))+" m/s")
+        plt.quiver(position[:,0],
+                   position[:,2],
+                   velocity[:,0],
+                   velocity[:,2],
+                   units='xy',
+                   scale=0.5,
+                   )
+        plt.plot([i for i in range(100)],sea_state.get_elevation_at_nodes(position2,t),color='b')
+        plt.plot([0,100],[0,0],color='r',linewidth=0.5)
+        plt.xlabel("X (m)")
+        plt.ylabel("elevation (m)")
+        plt.xlim(0, 100)
+        plt.ylim(-26, 6)
+        # print("velocity at "+str(position[360])+" is "+ str(velocity[360]))
+        # q.set_array(np.linspace(0,2,10))
+        # fig.colorbar(q)
+        plt.tight_layout()
+        plt.savefig('./figures/timeframes/irrugularwaves_'+str(t)+'.png', dpi=600)
 
 
     # fig = plt.figure()
