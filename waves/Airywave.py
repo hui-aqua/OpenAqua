@@ -238,7 +238,7 @@ if __name__ == "__main__":
     plt.legend()
 
     plt.tight_layout()
-    plt.savefig('./figures/waveperiod_vs_wavelengthAndphasevelocity.png', dpi=600)
+    # plt.savefig('./figures/waveperiod_vs_wavelengthAndphasevelocity.png', dpi=600)
     # plt.show()
 
     ## validation 2 shows the wave elevation according to time and space
@@ -288,7 +288,7 @@ if __name__ == "__main__":
     # plt.legend()
 
     plt.tight_layout()
-    plt.savefig('./figures/wave_shape.png', dpi=600)
+    # plt.savefig('./figures/wave_shape.png', dpi=600)
     # plt.show()
 
 
@@ -326,7 +326,7 @@ if __name__ == "__main__":
         plt.grid(True)
         plt.legend()
     plt.tight_layout()
-    plt.savefig('./figures/wave_velocity.png', dpi=600)
+    # plt.savefig('./figures/wave_velocity.png', dpi=600)
     # plt.show()
 
 
@@ -386,5 +386,5 @@ if __name__ == "__main__":
     plt.grid(True)
 
     plt.tight_layout()
-    plt.savefig('./figures/velocityandacceleration.png', dpi=600)
+    # plt.savefig('./figures/velocityandacceleration.png', dpi=600)
     plt.show()
