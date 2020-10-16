@@ -54,7 +54,7 @@ class cable:
         return force1, force2
 
 if __name__ == "__main__":
-    gravity = 9.81  # [m/s2]
+    gravity = np.array([0,0,-9.81])  # [m/s2]
     # define nodes
     nodes=np.zeros((20,3))
     for i in range(20):
@@ -67,12 +67,42 @@ if __name__ == "__main__":
 
     structure=[]
     for each in elements:
-        structure.append(cable(nodes[each[0]],nodes[each[1]], 0.05, 0.01, 1025, 2e6, 15e6))
+        structure.append(cable(nodes[each[0]],nodes[each[1]], 0.05*1.4142, 0.01, 1025, 2e6, 15e6))
+    
     #TODO solve the mass motion equations
+    dt=0.1 #[s]
+    t_end=1
+    
+    displacement=np.zeros((len(nodes),3))
+    acceleration=np.zeros((len(nodes),3))
+    velocity=np.zeros((len(nodes),3))
+    mass=np.ones((len(nodes),1))*structure[0].area*structure[0].l_0*structure[0].row
+    
+    force_external=np.zeros((len(nodes),3))
+    for i in range(len(nodes)-1):
+        force_external[i]=structure[i].area*structure[i].l_0*structure[i].row*gravity
+    # boundary condition on the end        
+    force_external[-1]=[0,0,-1]
+    
+    t_inst=0
+    for i in range(int(t_end/dt)):
+        t_inst+=dt
+        force_internal=np.zeros((len(nodes),3))
+        for index, item in enumerate(structure):
+            position=nodes.copy()+displacement
+            force_internal[elements[index][0]]= item.map_tensions(position[elements[index][0]],position[elements[index][1]])[0]
+            force_internal[elements[index][1]]= item.map_tensions(position[elements[index][0]],position[elements[index][1]])[1]
 
-    print(structure[0].tension_mag)
-    print(structure[0].cal_tension(np.array([0, 0, 0]), np.array([0, 0, 1.1])))
-    print(structure[0].map_tensions(np.array([0, 0, 0]), np.array([0, 0, 1.1])))
+        acceleration=(force_external+force_internal)/mass
+        velocity+=acceleration*dt
+        displacement=velocity*dt+0.2*acceleration*pow(dt,2)
+        # boundary condition
+        velocity[0]=0
+        displacement[0]=0
+        position+=displacement
+        print("t_inst is " +str(t_inst))
+        print(position)
+
 
 
 
@@ -80,6 +110,6 @@ if __name__ == "__main__":
 
 
     for each in elements:
-        plt.plot(nodes[each][:,0], nodes[each][:,2])
-    plt.scatter(nodes[:,0],nodes[:,2],color='k')
+        plt.plot(position[each][:,0], position[each][:,2])
+    plt.scatter(position[:,0],position[:,2],color='k')
     plt.show()
