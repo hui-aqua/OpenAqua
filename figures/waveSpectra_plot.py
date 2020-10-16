@@ -1,6 +1,5 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import sys
 
 plt.rcParams['font.family'] = 'serif'
@@ -29,8 +28,6 @@ time_frame = np.arange(0, 3600, dt)
 fre_max = 3
 d_fre = 2 * np.pi / time_max
 fre_range = np.arange(d_fre, fre_max, d_fre)
-# fre_range=np.arange(0.001,3,0.001)
-# fre_range=np.linspace(d_fre,fre_max,10000)
 plt.figure(figsize=(6.3, 4.0))
 Hs = 4
 Tp = 8
