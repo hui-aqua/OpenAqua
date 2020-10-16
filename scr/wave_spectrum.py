@@ -12,6 +12,7 @@ please email: hui.cheng@uis.no \n
 import numpy as np
 from numpy import pi
 
+
 def pierson_moskowitz_spectra(omega, hs, tp):
     """
     Generate Pierson-Moskowitz wave spectrum \n
@@ -63,5 +64,5 @@ def jonswap_spectra(omega, hs, tp, gamma=3.3, gamma_auto=False):
 
 
 if __name__ == "__main__":
-    sp1=jonswap_spectra(np.linspace(0.01,3,1000),5,8,3.3)
+    sp1 = jonswap_spectra(np.linspace(0.01, 3, 1000), 5, 8, 3.3)
     print(sp1)

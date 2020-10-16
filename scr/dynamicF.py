@@ -18,11 +18,14 @@ Please refer to Cheng et al. (2020) [https://doi.org/10.1016/j.aquaeng.2020.1020
 
 import numpy as np
 import sys
-np.set_printoptions(threshold=sys.maxsize)
 
-row = 1025  # [kg/m3]   sea water density
+np.set_printoptions(threshold=sys.maxsize)
+row_air = 1.225  # [kg/m3]   air density
+row_water = 1025  # [kg/m3]   sea water density
 kinematic_viscosity = 1.004e-6  # when the water temperature is 20 degree.
 dynamic_viscosity = 1.002e-3  # when the water temperature is 20 degree.
+
+
 
 class net2netWeak:
     """
@@ -83,7 +86,7 @@ class net2netWeak:
         :return: [List] Unit [-]. A list of "indexes of the elements" in the wake region.
         """
         elements_in_wake = []
-        for index,element in enumerate(self.elements):
+        for index, element in enumerate(self.elements):
             if self.is_element_in_wake(element):
                 elements_in_wake.append(index)
         return elements_in_wake
@@ -152,11 +155,12 @@ class morisonModel:
 
     def __str__(self):
         """Print information of the present object."""
-        s0="Morison modelm\n"
-        s1="The model index is "+ str(self.modelIndex)+ "\n"
-        s2="In total, there are "+str(len(self.elements))+" hydrodynamic line elements. \n"
-        s3="The total force on the nettings are \nFx="+str(sum(self.force_on_elements[:,0])) +"N\n" +  "Fy="+str(sum(self.force_on_elements[:,2])) +"N\n" +"Fz="+str(sum(self.force_on_elements[:,2])) +"N\n"
-        return s0+s1+s2+s3
+        s0 = "Morison modelm\n"
+        s1 = "The model index is " + str(self.modelIndex) + "\n"
+        s2 = "In total, there are " + str(len(self.elements)) + " hydrodynamic line elements. \n"
+        s3 = "The total force on the nettings are \nFx=" + str(sum(self.force_on_elements[:, 0])) + "N\n" + "Fy=" + str(
+            sum(self.force_on_elements[:, 2])) + "N\n" + "Fz=" + str(sum(self.force_on_elements[:, 2])) + "N\n"
+        return s0 + s1 + s2 + s3
 
     def output_hydro_element(self):
         """
@@ -181,14 +185,14 @@ class morisonModel:
             drag_normal = 1.3
             drag_tangent = 0.0
         elif self.modelIndex == 'M3':  # Takagi 2004
-            reynolds_number = row * self.dw0 * np.linalg.norm(current_velocity) / dynamic_viscosity
+            reynolds_number = row_water * self.dw0 * np.linalg.norm(current_velocity) / dynamic_viscosity
             if reynolds_number < 200:
                 drag_normal = pow(10, 0.7) * pow(reynolds_number, -0.3)
             else:
                 drag_normal = 1.2
             drag_tangent = 0.1
         elif self.modelIndex == 'M4':  # choo 1971
-            reynolds_number = row * self.dw0 * np.linalg.norm(current_velocity) / dynamic_viscosity
+            reynolds_number = row_water * self.dw0 * np.linalg.norm(current_velocity) / dynamic_viscosity
             drag_tangent = np.pi * dynamic_viscosity * (
                     0.55 * np.sqrt(reynolds_number) + 0.084 * pow(reynolds_number, 2.0 / 3.0))
             s = -0.07721565 + np.log(8.0 / reynolds_number)
@@ -206,7 +210,7 @@ class morisonModel:
                 print("Reynold number=" + str(reynolds_number) + ", and it exceeds the range.")
                 exit()
         elif self.modelIndex == 'M5':  # cifuentes 2017
-            reynolds_number = row * self.dw0 * np.linalg.norm(current_velocity) / dynamic_viscosity
+            reynolds_number = row_water * self.dw0 * np.linalg.norm(current_velocity) / dynamic_viscosity
             drag_normal = -3.2891e-5 * pow(reynolds_number * self.Sn * self.Sn,
                                            2) + 0.00068 * reynolds_number * self.Sn * self.Sn + 1.4253
         return drag_normal, drag_tangent
@@ -225,7 +229,7 @@ class morisonModel:
         hydro_force_on_element = []  # force on line element, initial as zeros
         wave_velocity = np.zeros((num_line, 3))
         if wave:
-            for index,line in enumerate(self.elements):
+            for index, line in enumerate(self.elements):
                 element_center = (realtime_node_position[int(line[0])] + realtime_node_position[int(line[1])]) / 2.0
                 wave_velocity[index] = wave.get_velocity(element_center, fe_time)
 
@@ -237,9 +241,10 @@ class morisonModel:
 
             velocity = np.array(current_velocity) * net_wake.reduction_factor(i) + wave_velocity[i]
             drag_n, drag_t = self.hydro_coefficients(velocity)
-            ft = 0.5 * row * self.dwh * (b - self.dwh) * drag_t * np.dot(a, velocity) * a * np.linalg.norm(
+            ft = 0.5 * row_water * self.dwh * (b - self.dwh) * drag_t * np.dot(a, velocity) * a * np.linalg.norm(
                 np.dot(a, velocity))
-            fn = 0.5 * row * self.dwh * (b - self.dwh) * drag_n * (velocity - np.dot(a, velocity) * a) * np.linalg.norm(
+            fn = 0.5 * row_water * self.dwh * (b - self.dwh) * drag_n * (
+                        velocity - np.dot(a, velocity) * a) * np.linalg.norm(
                 (velocity - np.dot(a, velocity) * a))
             hydro_force_on_element.append(ft + fn)
         self.force_on_elements = np.array(hydro_force_on_element)
@@ -256,8 +261,8 @@ class morisonModel:
             force_on_nodes[line[1]] += (self.force_on_elements[index]) / 2
         return force_on_nodes
 
-class screenModel:
 
+class screenModel:
     """
     For Morison hydrodynamic models, the forces on netting are calculated based on individual a panel section of netting.
     The twines and knots in the net panel are considered as an integrated structure. In this module, the net panel is defined by
@@ -265,7 +270,7 @@ class screenModel:
     In practice, the force is usually decomposed into two componnets: drag force F_D and lift force F_L (Cheng et al., 2020).
     """
 
-    def __init__(self, model_index, hydro_element, solidity, dw0=0.0,dwh=0.0):
+    def __init__(self, model_index, hydro_element, solidity, dw0=0.0, dwh=0.0):
         """
         :param model_index: [string] Unit: [-]. To indicate the model function, e.g.: 'S1', 'S2', 'S3'.
         :param hydro_element: [[list]] Unit: [-]. A python list to indicate how the net panel are connected. e.g.:[[p1,p2,p3][p2,p3,p4,p5]...]. If the input net panel contains 4 nodes, it will automaticly decomposed to 3 node net panel.
@@ -278,15 +283,17 @@ class screenModel:
         self.dwh = dwh
         self.dw0 = dw0
         self.Sn = solidity
-        self.FEtime=0
+        self.FEtime = 0
         self.force_on_elements = np.zeros((len(self.hydro_element), 3))
+
     def __str__(self):
         """Print information of the present object."""
-        s0="Screen model"
-        s1="The model index is "+ str(self.modelIndex)+ "\n"
-        s2="In total, there are "+str(len(self.hydro_element))+" hydrodynamic triangular elements. \n"
-        s3="The total force on the nettings are \nFx="+str(sum(self.force_on_elements[:,0])) +"N\n" + "Fy="+str(sum(self.force_on_elements[:,2])) +"N\n" +"Fz="+str(sum(self.force_on_elements[:,2])) +"N\n"
-        return s0+s1+s2+s3
+        s0 = "Screen model"
+        s1 = "The model index is " + str(self.modelIndex) + "\n"
+        s2 = "In total, there are " + str(len(self.hydro_element)) + " hydrodynamic triangular elements. \n"
+        s3 = "The total force on the nettings are \nFx=" + str(sum(self.force_on_elements[:, 0])) + "N\n" + "Fy=" + str(
+            sum(self.force_on_elements[:, 2])) + "N\n" + "Fz=" + str(sum(self.force_on_elements[:, 2])) + "N\n"
+        return s0 + s1 + s2 + s3
 
     def output_hydro_element(self):
         """
@@ -324,7 +331,7 @@ class screenModel:
             a3 = 0.1
             b2 = 1.0
             b4 = 0.1
-            reynolds_number = row * self.dw0 * np.linalg.norm(current_velocity) / dynamic_viscosity / (
+            reynolds_number = row_water * self.dw0 * np.linalg.norm(current_velocity) / dynamic_viscosity / (
                     1 - self.Sn)  # Re
             cd_cylinder = -78.46675 + 254.73873 * np.log10(reynolds_number) - 327.8864 * pow(np.log10(reynolds_number),
                                                                                              2) + 223.64577 * pow(
@@ -338,7 +345,7 @@ class screenModel:
             lift_coefficient = cl_pi_4 * (b2 * np.sin(2 * inflow_angle) + b4 * np.sin(4 * inflow_angle))
 
         elif self.modelIndex == 'S4':  # Fridman 1973
-            reynolds_number = np.linalg.norm(current_velocity) * self.dw0 * row / dynamic_viscosity
+            reynolds_number = np.linalg.norm(current_velocity) * self.dw0 * row_water / dynamic_viscosity
             reynolds_star = reynolds_number / (2 * self.Sn)
             coe_tangent = 0.1 * pow(reynolds_number, 0.14) * self.Sn
             coe_normal = 3 * pow(reynolds_star, -0.07) * self.Sn
@@ -358,14 +365,14 @@ class screenModel:
                 inflow_angle, 2) + 0.2325 * pow(inflow_angle, 1) + 0.01294
 
         elif self.modelIndex == 'S6':  # Balash 2009
-            reynolds_cylinder = row * self.dw0 * np.linalg.norm(current_velocity) / dynamic_viscosity / (
+            reynolds_cylinder = row_water * self.dw0 * np.linalg.norm(current_velocity) / dynamic_viscosity / (
                     1 - self.Sn) + 0.000001
             cd_cylinder = 1 + 10.0 / (pow(reynolds_cylinder, 2.0 / 3.0))
             drag_coefficient = cd_cylinder * (0.12 - 0.74 * self.Sn + 8.03 * pow(self.Sn, 2)) * pow(inflow_angle, 3)
             if knot:
                 mesh_size = 10 * self.dw0  # assume Sn=0.2
                 diameter_knot = 2 * self.dw0  # assume the knot is twice of the diameter of the twine
-                reynolds_sphere = row * diameter_knot * np.linalg.norm(current_velocity) / dynamic_viscosity / (
+                reynolds_sphere = row_water * diameter_knot * np.linalg.norm(current_velocity) / dynamic_viscosity / (
                         1 - self.Sn) + 0.000001
                 coe_sphere = 24.0 / reynolds_sphere + 6.0 / (1 + np.sqrt(reynolds_sphere)) + 0.4
                 drag_coefficient = (cd_cylinder * 8 * pow(diameter_knot,
@@ -397,7 +404,7 @@ class screenModel:
         :param current_velocity: numpy array ([ux,uy,uz]), Unit [m/s]
         :return: [np.array].shape=(M,3) Unit [N]. The hydrodynamic forces on all M elements. Meanwhile, update the self.force_on_elements
         """
-        self.FEtime=fe_time
+        self.FEtime = fe_time
         wave_velocity = np.zeros((len(self.hydro_element), 3))
         if wave:
             for index, panel in enumerate(self.hydro_element):
@@ -422,8 +429,9 @@ class screenModel:
             else:
                 velocity_relative = velocity - velocity_structure * 0
             drag_coefficient, lift_coefficient = self.hydro_coefficients(alpha, velocity_relative, knot=False)
-            fd = 0.5 * row * net_area * drag_coefficient * np.linalg.norm(velocity_relative) * velocity_relative
-            fl = 0.5 * row * net_area * lift_coefficient * pow(np.linalg.norm(velocity_relative), 2) * lift_direction
+            fd = 0.5 * row_water * net_area * drag_coefficient * np.linalg.norm(velocity_relative) * velocity_relative
+            fl = 0.5 * row_water * net_area * lift_coefficient * pow(np.linalg.norm(velocity_relative),
+                                                                     2) * lift_direction
             hydro_force_on_element.append((fd + fl) / 2.0)
             # print("panel is "+str(panel))
             # print("area of panel is "+str(net_area))
@@ -479,10 +487,11 @@ class screenModel:
             else:
                 velocity_relative = velocity_fluid - velocity_structure * 0
 
-            fd = 0.5 * row * surface_area * drag_coefficient * np.linalg.norm(np.array(velocity_relative)) * np.array(
+            fd = 0.5 * row_water * surface_area * drag_coefficient * np.linalg.norm(
+                np.array(velocity_relative)) * np.array(
                 velocity_relative)
-            fl = 0.5 * row * surface_area * lift_coefficient * pow(np.linalg.norm(velocity_relative),
-                                                                   2) * lift_direction
+            fl = 0.5 * row_water * surface_area * lift_coefficient * pow(np.linalg.norm(velocity_relative),
+                                                                         2) * lift_direction
             hydro_force_on_element.append((fd + fl) / 2.0)
         if np.size(np.array(hydro_force_on_element)) == np.size(self.hydro_element):
             self.force_on_elements = np.array(hydro_force_on_element)
@@ -528,6 +537,12 @@ class screenModel:
             forces_on_nodes[panel[2]] += force_increasing_factor * (self.force_on_elements[index]) / 3
         return forces_on_nodes
 
+
+def cal_buoy_force(sea,list_of_node,elements,global_time):
+    buoyancy_forces=np.zeros((len(list_of_node),3))
+    eta=sea.get_elevation_at_nodes(list_of_node,global_time)
+    pass
+#TODO rethink put this function inside the two classes?
 
 
 def calculation_on_element(point1, point2, point3, velocity):
@@ -632,15 +647,14 @@ def get_velocity_aster(table_aster):  # to get the velocity
     velocity = np.array([velocity_x, velocity_y, velocity_z])
     return np.transpose(velocity)
 
+
 def index_convert(input_connection):
-    out=input_connection
+    out = input_connection
     for i, con in enumerate(out):
         for j in range(len(con)):
-            out[i][j]-=1
+            out[i][j] -= 1
     return out
 
 
-
 if __name__ == "__main__":
-    # test code here
     pass
