@@ -14,24 +14,26 @@ from numpy import pi
 
 
 class cable:
-    """usig a cabel theory\n
+    """using a cable theory\n
     Ref is not defined yet
     """
-
-    def __init__(self, point1, point2, initial_lenght, cross_section_diameter, Young_module, breaking_strength):
+    def __init__(self, point1, point2, initial_length, cross_section_diameter, density, Young_module, breaking_strength):
         """ Initialize a cable element
         Args:
             point1 (np.array[1,3]): [description]
             point2 (np.array[1,3]): [description]
-            initial_lenght (float): [description]
-            Young_module (float): [description]
+            initial_length (float): [description]
             cross_section_diameter (float): [description]
+            density (float): material density [kg/m3]
+            Young_module (float): [description]
+            breaking_strength (float):
         """
-        self.l_0 = initial_lenght
+        self.l_0 = initial_length
         self.p1 = point1
         self.p2 = point2
         self.length = np.linalg.norm(point1 - point2)
         self.area = 0.25 * pi * pow(cross_section_diameter, 2)
+        self.row = density
         self.elasticity = Young_module
         self.bs = breaking_strength
         self.tension_mag = self.cal_tension(point1, point2)[0]
@@ -52,7 +54,32 @@ class cable:
         return force1, force2
 
 if __name__ == "__main__":
-    element = cable(np.array([0, 0, 0]), np.array([0, 0, 1]), 0.9, 0.01, 2e6, 5e6)
-    print(element.tension_mag)
-    print(element.cal_tension(np.array([0, 0, 0]), np.array([0, 0, 1.1])))
-    print(element.map_tensions(np.array([0, 0, 0]), np.array([0, 0, 1.1])))
+    gravity = 9.81  # [m/s2]
+    # define nodes
+    nodes=np.zeros((20,3))
+    for i in range(20):
+        nodes[i]=[i*0.05,0,-i*0.05]
+    # define connection
+    elements=[]
+    for i in range(20-1):
+        elements.append([i,i+1])
+
+
+    structure=[]
+    for each in elements:
+        structure.append(cable(nodes[each[0]],nodes[each[1]], 0.05, 0.01, 1025, 2e6, 15e6))
+    #TODO solve the mass motion equations
+
+    print(structure[0].tension_mag)
+    print(structure[0].cal_tension(np.array([0, 0, 0]), np.array([0, 0, 1.1])))
+    print(structure[0].map_tensions(np.array([0, 0, 0]), np.array([0, 0, 1.1])))
+
+
+
+    import matplotlib.pyplot as plt
+
+
+    for each in elements:
+        plt.plot(nodes[each][:,0], nodes[each][:,2])
+    plt.scatter(nodes[:,0],nodes[:,2],color='k')
+    plt.show()
