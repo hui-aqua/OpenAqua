@@ -93,7 +93,7 @@ class Airywave:
         """
         return self.wave_Height / 2 * np.cos(self.calc_theta(position, global_time))
 
-    def get_velocity_with_time(self, position, global_time):
+    def get_velocity_with_time(self, position, global_time, irregularwaves=False):
         """
         :param position: [np.array].shape=(1,3) | Unit: [m]. The position of the point which you want to know the wave velocity
         :param global_time: [float] Unit: [s]. The time which you want to know the wave velocity
@@ -109,10 +109,11 @@ class Airywave:
             self.wave_k * (position_z + self.water_Depth)) * np.cos(theta) / np.sinh(self.wave_k * self.water_Depth)
         velocity[:, 2] = self.pi_h_t * np.sinh(self.wave_k * (position_z + self.water_Depth)) * np.sin(theta) / np.sinh(
             self.wave_k * self.water_Depth)
-        velocity[position[2] > eta] = 0.0
+        if not irregularwaves:
+            velocity[position[2] > eta] = 0.0
         return velocity
 
-    def get_acceleration_with_time(self, position, global_time):
+    def get_acceleration_with_time(self, position, global_time, irregularwaves=False):
         """
         :param position: [np.array].shape=(1,3) | Unit: [m]. The position of the point which you want to know the wave acceleration.
         :param global_time: [float] Unit: [s]. The time which you want to know the wave velocity
@@ -129,7 +130,8 @@ class Airywave:
         acceleration[:, 2] = -self.pi_h_t_2 * np.sinh(self.wave_k * (position_z + self.water_Depth)) * np.cos(
             theta) / np.sinh(
             self.wave_k * self.water_Depth)
-        acceleration[position[2] > eta] = 0.0
+        if not irregularwaves:
+            acceleration[position[2] > eta] = 0.0
         return acceleration
 
     def get_elevations_with_time(self, position, time_list):
@@ -150,7 +152,7 @@ class Airywave:
         """
         return self.get_elevation(list_of_point, global_time)
 
-    def get_velocity_at_nodes(self, list_of_point, global_time):
+    def get_velocity_at_nodes(self, list_of_point, global_time, irregularwaves=False):
         """
         Public function.\n
         :param list_of_point:  [np.array].shape=(n,3) Unit: [m]. A list of points's positions
@@ -167,10 +169,11 @@ class Airywave:
             self.wave_k * (positions_z + self.water_Depth)) * np.cos(theta) / np.sinh(self.wave_k * self.water_Depth)
         velocities[:, 2] = self.pi_h_t * np.sinh(self.wave_k * (positions_z + self.water_Depth)) * np.sin(theta) / np.sinh(
             self.wave_k * self.water_Depth)
-        # velocities[list_of_point[:, 2] > eta] = 0.0
+        if not irregularwaves:
+            velocities[list_of_point[:, 2] > eta] = 0.0
         return velocities
 
-    def get_acceleration_at_nodes(self, list_of_point, global_time):
+    def get_acceleration_at_nodes(self, list_of_point, global_time, irregularwaves=False):
         """
         Public function.\n
         :param list_of_point: [np.array].shape=(n,3) Unit: [m]. A list of points's positions
@@ -187,7 +190,8 @@ class Airywave:
             self.wave_k * (positions_z + self.water_Depth)) * np.sin(theta) / np.sinh(self.wave_k * self.water_Depth)
         accelerations[:, 2] = -self.pi_h_t_2 * np.sinh(self.wave_k * (positions_z + self.water_Depth)) * np.cos(theta) / np.sinh(
             self.wave_k * self.water_Depth)
-        # accelerations[list_of_point[:, 2] > eta] = 0.0
+        if not irregularwaves:
+            accelerations[list_of_point[:, 2] > eta] = 0.0
         return accelerations
 
 

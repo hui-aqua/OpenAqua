@@ -12,7 +12,7 @@ class irregular_sea:
     ----------
     *NOTE: The maximum applied simulation time should be less than 3h.
     """
-
+    # TODO change the input to wave spectra
     def __init__(self, significant_wave_height, peak_period, gamma, water_depth, wave_direction):
         """
         Parameters
