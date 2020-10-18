@@ -261,6 +261,11 @@ class morisonModel:
             force_on_nodes[line[1]] += (self.force_on_elements[index]) / 2
         return force_on_nodes
 
+    def cal_buoy_force(sea, list_of_node, elements, global_time):
+        buoyancy_forces = np.zeros((len(list_of_node), 3))
+        eta = sea.get_elevation_at_nodes(list_of_node, global_time)
+        pass
+
 
 class screenModel:
     """
@@ -538,11 +543,11 @@ class screenModel:
         return forces_on_nodes
 
 
-def cal_buoy_force(sea,list_of_node,elements,global_time):
-    buoyancy_forces=np.zeros((len(list_of_node),3))
-    eta=sea.get_elevation_at_nodes(list_of_node,global_time)
-    pass
-#TODO rethink put this function inside the two classes?
+    def cal_buoy_force(sea, list_of_node, elements, global_time):
+        buoyancy_forces = np.zeros((len(list_of_node), 3))
+        eta = sea.get_elevation_at_nodes(list_of_node, global_time)
+        pass
+
 
 
 def calculation_on_element(point1, point2, point3, velocity):

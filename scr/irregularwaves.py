@@ -1,6 +1,8 @@
 import numpy as np
 from scr import Airywave as wave
 from scr import wave_spectrum as wsp
+
+
 # import Airywave as wave
 # import wave_spectrum as wsp
 
@@ -12,12 +14,13 @@ class irregular_sea:
     ----------
     *NOTE: The maximum applied simulation time should be less than 3h.
     """
+
     # TODO change the input to wave spectra
     def __init__(self, significant_wave_height, peak_period, gamma, water_depth, wave_direction):
         """
         Parameters
         ------------
-        significant_wave_height：significant wave height | float |Uinit [m]
+        significant_wave_height：significant wave height | float | Unit [m]
         peak_period：peak period | float | Unit [s]
         gamma：gamma | float | Unit [-]
         water_depth： water depth of the sea, assume flat sea floor. A position number | float | Unit [m]
@@ -47,29 +50,19 @@ class irregular_sea:
         s3 = 'Number of wave components is ' + str(len(self.list_of_waves))
         return s0 + s1 + s2 + s3
 
+    ## elevation
+
     def get_elevations_with_time(self, position, time_list):
         """
         Public function.\n
-        :param position: [np.array].shape=(n,3) Unit: [m]. The position of one node
-        :param time_list: [np.array].shape=(n,1) | Uint: [s]. The time sequence for geting the elevations \n
-        :return: Get a list of elevations at one position with a time squence \n
+        :param position: [np.array].shape=(n,3) | Unit: [m]. The position of one node
+        :param time_list: [np.array].shape=(n,1) | Uint: [s]. The time sequence for getting the elevations \n
+        :return: Get a list of elevations at one position with a time sequence \n
         """
         wave_elevations = np.zeros((len(self.list_of_waves), len(time_list)))
         for index, each_wave in enumerate(self.list_of_waves):
             wave_elevations[index] = each_wave.get_elevation(position, time_list)
         return np.sum(wave_elevations, axis=0)
-
-    def get_velocity_with_time(self, position, time_list):
-        """
-        Public function.\n
-        :param position: [np.array].shape=(n,3) Unit: [m]. The position of one node
-        :param time_list: [np.array].shape=(n,1) | Uint: [s]. The time sequence for geting the elevations \n
-        :return: Get a list of elevations at one position with a time squence \n
-        """
-        waves_velocities = np.zeros((len(self.list_of_waves), len(time_list), 3))
-        for index, each_wave in enumerate(self.list_of_waves):
-            waves_velocities[index] = each_wave.get_velocity_with_time(position, time_list)
-        return np.sum(waves_velocities, axis=0)
 
     def get_elevation_at_nodes(self, list_of_point, global_time):
         """
@@ -82,6 +75,19 @@ class irregular_sea:
         for index, each_wave in enumerate(self.list_of_waves):
             wave_elevations[index] = each_wave.get_elevation_at_nodes(list_of_point, global_time)
         return np.sum(wave_elevations, axis=0)
+
+    ## velocity
+    def get_velocity_with_time(self, position, time_list):
+        """
+        Public function.\n
+        :param position: [np.array].shape=(n,3) | Unit: [m]. The position of one node
+        :param time_list: [np.array].shape=(n,1) | Uint: [s]. The time sequence for getting the elevations \n
+        :return: Get a list of elevations at one position with a time sequence \n
+        """
+        waves_velocities = np.zeros((len(self.list_of_waves), len(time_list), 3))
+        for index, each_wave in enumerate(self.list_of_waves):
+            waves_velocities[index] = each_wave.get_velocity_with_time(position, time_list, irregularwaves=True)
+        return np.sum(waves_velocities, axis=0)
 
     def get_velocity_at_nodes(self, list_of_point, global_time):
         """
@@ -98,7 +104,7 @@ class irregular_sea:
         # linear stretching method
         # points[:, 2][points[:, 2] >= 0] = 0
         for index, each_wave in enumerate(self.list_of_waves):
-            node_velocity_set[index] = each_wave.get_velocity_at_nodes(points, global_time)
+            node_velocity_set[index] = each_wave.get_velocity_at_nodes(points, global_time, irregularwaves=True)
         velocities = np.sum(node_velocity_set, axis=0)
         # ensure the velocity is zero above the wave elevation
         velocities[list_of_point[:, 2] > list_elevation] = 0
@@ -119,7 +125,7 @@ class irregular_sea:
         # linear stretching method
         # points[:, 2][points[:, 2] >= 0] = 0
         for index, each_wave in enumerate(self.list_of_waves):
-            node_acceleration_set[index] = each_wave.get_acceleration_at_nodes(points, global_time)
+            node_acceleration_set[index] = each_wave.get_acceleration_at_nodes(points, global_time, irregularwaves=True)
         accelerations = np.sum(node_acceleration_set, axis=0)
         accelerations[list_of_point[:, 2] > list_elevation] = 0
         return accelerations
