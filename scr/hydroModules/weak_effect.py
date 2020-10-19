@@ -12,8 +12,6 @@ please email: hui.cheng@uis.no \n
 import numpy as np
 from numpy import pi
 
-
-
 class net2netWeak:
     """
     #TODO to be modified later
