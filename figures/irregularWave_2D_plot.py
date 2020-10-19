@@ -20,7 +20,7 @@ try:
     sys.path.insert(1, '/home/hui/PycharmProjects/OpenAqua')  # the type of path is string
     # because the system path already have the absolute path to folder a
     # so it can recognize file_a.py while searching 
-    from scr.irregularwaves import *
+    from scr.enviromentModules.irregularwaves import *
 except (ModuleNotFoundError, ImportError) as e:
     print("{} fileure".format(type(e)))
 else:
@@ -52,58 +52,58 @@ position2 = np.zeros((100, 3))
 for i in range(100):
     position2[i] = [i, 0, 0]
 plt.figure(figsize=(6.7, 6.5))
-for t in time_frame:
-# t=0
-    plt.clf()
+# for t in time_frame:
+t=0
+plt.clf()
+
+ax = plt.subplot(gs[0, 0])
+plt.title("Elevation with time at position x=0, y=0")
+plt.plot(time_frame, elevations, color='b', linewidth=0.5)
+plt.xlabel("time (s)")
+plt.ylabel("surface elevation (m)")
+plt.xlim(0, 3600)
+plt.ylim(-5, 5)
+
+ax = plt.subplot(gs[1, 0])
+plt.title("Elevation and velocity at " + str(t) + " s")
+velocity = sea_state.get_velocity_at_nodes(position, t)
+
+plt.text(65, -35, "Maximum velocity " + str(round(max(np.linalg.norm(velocity, axis=1)), 2)) + " m/s")
+plt.quiver(position[:, 0],
+           position[:, 2],
+           velocity[:, 0],
+           velocity[:, 2],
+           units='xy',
+           scale=0.5,
+           )
+plt.plot([i for i in range(100)], sea_state.get_elevation_at_nodes(position2, t), color='b')
+plt.plot([0, 100], [0, 0], color='r', linewidth=0.5)
+plt.xlabel("X (m)")
+plt.ylabel("elevation (m)")
+plt.xlim(0, 100)
+plt.ylim(-26, 6)
+
+
+ax = plt.subplot(gs[2, 0])
+plt.title("Elevation and acceleration at " + str(t) + " s")
+acceleration=sea_state.get_acceleration_at_nodes(position,t)
+plt.text(65, -35, "Maximum acceleration " + str(round(max(np.linalg.norm(acceleration, axis=1)), 2)) + " m/s$^{2}$")
+plt.quiver(position[:, 0],
+           position[:, 2],
+           acceleration[:, 0],
+           acceleration[:, 2],
+           units='xy',
+           scale=0.5,
+           )
+plt.plot([i for i in range(100)], sea_state.get_elevation_at_nodes(position2, t), color='b')
+plt.plot([0, 100], [0, 0], color='r', linewidth=0.5)
+plt.xlabel("X (m)")
+plt.ylabel("elevation (m)")
+plt.xlim(0, 100)
+plt.ylim(-26, 6)
     
-    ax = plt.subplot(gs[0, 0])
-    plt.title("Elevation with time at position x=0, y=0")
-    plt.plot(time_frame, elevations, color='b', linewidth=0.5)
-    plt.xlabel("time (s)")
-    plt.ylabel("surface elevation (m)")
-    plt.xlim(0, 3600)
-    plt.ylim(-5, 5)
-    
-    ax = plt.subplot(gs[1, 0])
-    plt.title("Elevation and velocity at " + str(t) + " s")
-    velocity = sea_state.get_velocity_at_nodes(position, t)
-    
-    plt.text(65, -35, "Maximum velocity " + str(round(max(np.linalg.norm(velocity, axis=1)), 2)) + " m/s")
-    plt.quiver(position[:, 0],
-               position[:, 2],
-               velocity[:, 0],
-               velocity[:, 2],
-               units='xy',
-               scale=0.5,
-               )
-    plt.plot([i for i in range(100)], sea_state.get_elevation_at_nodes(position2, t), color='b')
-    plt.plot([0, 100], [0, 0], color='r', linewidth=0.5)
-    plt.xlabel("X (m)")
-    plt.ylabel("elevation (m)")
-    plt.xlim(0, 100)
-    plt.ylim(-26, 6)
-    
-    
-    ax = plt.subplot(gs[2, 0])
-    plt.title("Elevation and acceleration at " + str(t) + " s")
-    acceleration=sea_state.get_acceleration_at_nodes(position,t)
-    plt.text(65, -35, "Maximum acceleration " + str(round(max(np.linalg.norm(acceleration, axis=1)), 2)) + " m/s$^{2}$")
-    plt.quiver(position[:, 0],
-               position[:, 2],
-               acceleration[:, 0],
-               acceleration[:, 2],
-               units='xy',
-               scale=0.5,
-               )
-    plt.plot([i for i in range(100)], sea_state.get_elevation_at_nodes(position2, t), color='b')
-    plt.plot([0, 100], [0, 0], color='r', linewidth=0.5)
-    plt.xlabel("X (m)")
-    plt.ylabel("elevation (m)")
-    plt.xlim(0, 100)
-    plt.ylim(-26, 6)
-    
-    # print("velocity at "+str(position[360])+" is "+ str(velocity[360]))
-    plt.tight_layout()
-    plt.savefig('./png/irregular_waves_' + str(t) + '.png', dpi=600)
+# print("velocity at "+str(position[360])+" is "+ str(velocity[360]))
+plt.tight_layout()
+plt.savefig('./png/irregular_waves_' + str(t) + '.png', dpi=600)
 # plt.savefig('./png/timeframes/irrugularwaves_' + str(t) + '.png', dpi=600)
 plt.show()

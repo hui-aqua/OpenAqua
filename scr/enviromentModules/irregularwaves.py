@@ -1,6 +1,6 @@
 import numpy as np
-from scr import Airywave as wave
-from scr import wave_spectrum as wsp
+from scr.enviromentModules import Airywave as wave
+from scr.enviromentModules import wave_spectrum as wsp
 
 
 # import Airywave as wave

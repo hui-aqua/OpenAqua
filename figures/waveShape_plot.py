@@ -20,7 +20,7 @@ try:
     sys.path.insert(1, '/home/hui/PycharmProjects/OpenAqua')  # the type of path is string
     # because the system path already have the absolute path to folder a
     # so it can recognize file_a.py while searching 
-    from scr.Airywave import *
+    from scr.enviromentModules.Airywave import *
 except (ModuleNotFoundError, ImportError) as e:
     print("{} fileure".format(type(e)))
 else:

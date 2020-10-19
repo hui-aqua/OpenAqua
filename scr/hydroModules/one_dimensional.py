@@ -112,7 +112,7 @@ class morisonModel:
                                            2) + 0.00068 * reynolds_number * self.sn * self.sn + 1.4253
         return drag_normal, drag_tangent
 
-    def force_on_element(self, node_position, velocity_fluid, velocity_structure):
+    def force_on_element(self, node_position, velocity_fluid, velocity_structure=np.zeros((99999, 3))):
         """
         calculate hydrodynamic forces on line-type structure.
         :param node_position: np.array[n,3] | Unit [m]| coordinates of nodes, n is the number of nodes
@@ -163,6 +163,7 @@ class morisonModel:
         :return: [np.array].shape=(N,3) Unit [N]. The hydrodynamic forces on all N nodes
         """
         force_on_nodes = np.zeros((number_of_node, 3))  # force on nodes, initial as zeros
+        self.hydro_total_forces=self.hydro_static_forces+self.hydro_dynamic_forces
         for index, line in enumerate(self.line_elements):
             force_on_nodes[line[0]] += (self.hydro_total_forces[index]) / 2
             force_on_nodes[line[1]] += (self.hydro_total_forces[index]) / 2
