@@ -55,8 +55,8 @@ class morisonModel:
         s0 = "Morison model\n"
         s1 = "The model index is " + str(self.model_index) + "\n"
         s2 = "In total, there are " + str(len(self.line_elements)) + " hydrodynamic line elements. \n"
-        s3 = "The total force on the netting are \nFx=" + str(sum(self.hydro_forces[:, 0])) + "N\n" + "Fy=" + str(
-            sum(self.hydro_forces[:, 2])) + "N\n" + "Fz=" + str(sum(self.hydro_forces[:, 2])) + "N\n"
+        s3 = "The total force on the netting are \nFx=" + str(sum(self.hydro_total_forces[:, 0])) + "N\n" + "Fy=" + str(
+            sum(self.hydro_total_forces[:, 2])) + "N\n" + "Fz=" + str(sum(self.hydro_total_forces[:, 2])) + "N\n"
         return s0 + s1 + s2 + s3
 
     def output_hydro_element(self):
