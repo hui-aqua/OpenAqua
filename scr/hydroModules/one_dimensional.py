@@ -36,7 +36,8 @@ class morisonModel:
         :param dwh: [float] Unit: [m]. The hydrodynamic diameter of the numerical net twines. It is used for the force calculation (reference area)
         """
         self.model_index = str(model_index)
-        self.line_elements = hydro_element.copy()
+        self.line_elements = (np.array(hydro_element)-1).tolist()
+        # converted_index = list(hydro_element) #if is python2
         self.dw0 = dw0  # used for the hydrodynamic coefficients
         self.dwh = dwh  # used for the force calculation (reference area)
         self.dws = np.sqrt(dwh / dw0) * dw0
@@ -46,9 +47,6 @@ class morisonModel:
         self.hydro_static_forces = np.zeros((len(hydro_element), 3))
         self.hydro_total_forces = np.zeros((len(hydro_element), 3))
 
-        for index, item in enumerate(self.line_elements):
-            for j in range(len(item)):
-                self.line_elements[index][j] -= 1
 
     def __str__(self):
         """Print information of the present object."""

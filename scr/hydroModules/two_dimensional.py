@@ -44,10 +44,8 @@ class screenModel:
         self.dws = np.sqrt(dwh / dw0) * dw0
         self.sn = solidity
         self.FEtime = 0
-        self.hydro_dynamic_forces = np.zeros((len(hydro_element), 3))
-        self.hydro_static_forces = np.zeros((len(hydro_element), 3))
-        self.hydro_total_forces = np.zeros((len(hydro_element), 3))
         converted_index = hydro_element.copy()
+        # converted_index = list(hydro_element) #if is python2
         for index, item in enumerate(converted_index):
             for j in range(len(item)):
                 converted_index[index][j] -= 1
@@ -60,6 +58,9 @@ class screenModel:
                     nodes = [int(k) for k in panel]  # get the list of nodes [p1,p2,p3,p4]
                     nodes.pop(i)  # delete the i node to make the square to a triangle
                     self.triangular_elements.append(nodes)  # delete the i node to make the square to a triangle
+        self.hydro_dynamic_forces = np.zeros((len(self.triangular_elements), 3))
+        self.hydro_static_forces = np.zeros((len(self.triangular_elements), 3))
+        self.hydro_total_forces = np.zeros((len(self.triangular_elements), 3))
 
     def __str__(self):
         """Print information of the present object."""
