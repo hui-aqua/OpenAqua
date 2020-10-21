@@ -20,7 +20,7 @@ try:
     sys.path.insert(1, '/home/hui/PycharmProjects/OpenAqua')  # the type of path is string
     # because the system path already have the absolute path to folder a
     # so it can recognize file_a.py while searching 
-    from scr.cable import *
+    from scr.structuralModules.cable import *
 except (ModuleNotFoundError, ImportError) as e:
     print("{} fileure".format(type(e)))
 else:
@@ -32,6 +32,7 @@ plt.rcParams["mathtext.default"] = "it"
 plt.rcParams["mathtext.fontset"] = "stix"
 
 gravity = np.array([0, 0, -9.81])  # [m/s2]
+
 # define nodes
 nodes = np.zeros((20, 3))
 for i in range(20):
@@ -45,7 +46,7 @@ structure = []
 for each in elements:
     structure.append(cable(nodes[each[0]], nodes[each[1]], 0.05 * 1.4142, 0.01, 1025, 2e9, 15e6))
 
-# TODO solve the mass motion equations
+
 dt = 0.0001  # [s]
 t_end = 2.3
 position = nodes.copy()
