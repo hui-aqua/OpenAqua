@@ -22,11 +22,11 @@ class Airywave:
 
     def __init__(self, wave_height=1.0, wave_period=10.0, water_depth=60.0, direction=0.0, phase=0.0):
         """
-        :param wave_height: [float] Unit: [m]. wave height.
-        :param wave_period: [float] Unit: [s]. wave period.
-        :param water_depth: [float] Unit: [m]. wave depth.
-        :param direction： [float] Unit: [degree]. direction of propagation, measured from the positive x-axis.
-        :param phase: [float] Unit: [degree]. phase.
+        :param water_depth: [float] | Unit: [m]. wave depth.
+        :param wave_height: [float] | Unit: [m]. wave height.
+        :param wave_period: [float] | Unit: [s]. wave period.
+        :param direction: [float] | Unit: [degree]. direction of propagation, measured from the positive x-axis.
+        :param phase: [float] | Unit: [degree]. phase.
         """
         self.gravity = 9.81
         self.wave_Height = wave_height
@@ -64,7 +64,7 @@ class Airywave:
         s3 = 'wave Length= ' + str(self.wave_Length) + ' m\n'
         s4 = 'wave Height= ' + str(self.wave_Height) + ' m\n'
         s5 = 'wave phase velocity= ' + str(self.wave_phase_velocity) + ' m/s\n'
-        s6 = 'wave direction：= ' + str(self.wave_beta) + ' degree\n'
+        s6 = 'wave direction= ' + str(self.wave_beta) + ' degree\n'
         return s0 + s1 + s2 + s2_1 + s3 + s4 + s5 + s6
 
     def calc_theta(self, position, global_time):

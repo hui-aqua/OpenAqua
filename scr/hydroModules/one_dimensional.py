@@ -37,7 +37,6 @@ class morisonModel:
         """
         self.model_index = str(model_index)
         self.line_elements = (np.array(hydro_element)-1).tolist()
-        # converted_index = list(hydro_element) #if is python2
         self.dw0 = dw0  # used for the hydrodynamic coefficients
         self.dwh = dwh  # used for the force calculation (reference area)
         self.dws = np.sqrt(dwh / dw0) * dw0

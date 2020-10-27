@@ -181,11 +181,11 @@ class screenModel:
 
         return surface_area, drag_coefficient, lift_coefficient, unit_normal_vector, lift_vector
 
-    def force_on_element(self, node_position, velocity_fluid, velocity_structure=np.zeros((99999, 3))):
+    def force_on_element(self, node_position, velocity_fluid, velocity_structure=np.zeros((99999, 3)),elevation=False):
         """
         calculate hydrodynamic forces on triangular-type structure.
         :param node_position: np.array[n,3] | Unit [m]| coordinates of nodes, n is the number of nodes
-        :param velocity_fluid: np.array[m,3] | Unit [m/s]| fluid velocity at the coordinates of nodes, n is the number of nodes
+        :param velocity_fluid: np.array[n,3] | Unit [m/s]| fluid velocity at the coordinates of nodes, n is the number of nodes
         :param velocity_structure: np.array[n,3] | Unit [m/s]| structure velocity of nodes, n is the number of nodes
         :return: np.array[m,3] | Unit [N]| hydrodynamic forces on elements, m is the number of element
         """
@@ -200,8 +200,15 @@ class screenModel:
                 panel[2]]) / 3.0
             relative_velocity = element_u - element_v
             net_area, c_d, c_l, drag_direction, lift_direction = self.hydro_coefficients(p1, p2, p3, relative_velocity)
-            fd = 0.5 * row_water * net_area * c_d * pow(np.linalg.norm(relative_velocity), 2) * drag_direction
-            fl = 0.5 * row_water * net_area * c_l * pow(np.linalg.norm(relative_velocity), 2) * lift_direction
+            if elevation is not False:
+                element_center = (p1 + p2 + p3) / 3.0
+                element_elevation = (elevation[int(panel[0])] + elevation[int(panel[1])] + elevation[int(panel[2])]) / 3.0
+                if element_center[2] > element_elevation:
+                    row=row_air
+                else:
+                    row=row_water
+            fd = 0.5 * row * net_area * c_d * pow(np.linalg.norm(relative_velocity), 2) * drag_direction
+            fl = 0.5 * row * net_area * c_l * pow(np.linalg.norm(relative_velocity), 2) * lift_direction
             force_on_element[index] = (fd + fl) / 2.0
         self.hydro_dynamic_forces = np.array(force_on_element)
         return np.array(force_on_element)
@@ -250,17 +257,16 @@ class screenModel:
             p1 = node_position[panel[0]]
             p2 = node_position[panel[1]]
             p3 = node_position[panel[2]]
-            element_area = self.hydro_coefficients(p1, p2, p3, np.array([0, 0, 0]))[0]  # get the area
+            element_area = self.hydro_coefficients(p1, p2, p3, np.array([1, 0, 0]))[0]  # get the area
             element_volume = element_area * self.sn * self.dws * 0.25 * pi
             element_center = (p1 + p2 + p3) / 3.0
             element_elevation = (elevation[int(panel[0])] + elevation[int(panel[1])] + elevation[int(panel[2])]) / 3.0
-
             if element_center[2] > element_elevation:
                 force_on_element[index] = [0, 0, element_volume * gravity * row_air]
             else:
                 force_on_element[index] = [0, 0, element_volume * gravity * row_water]
-        self.hydro_static_forces = np.array(force_on_element)
-        return np.array(force_on_element)
+        self.hydro_static_forces = np.array(force_on_element) /2
+        return np.array(force_on_element)/2
 
     def screen_buoy_fsi(self, node_position, elevation):
         # todo later

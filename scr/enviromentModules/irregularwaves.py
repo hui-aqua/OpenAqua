@@ -20,10 +20,10 @@ class irregular_sea:
         """
         Parameters
         ------------
-        significant_wave_height：significant wave height | float | Unit [m]
-        peak_period：peak period | float | Unit [s]
-        gamma：gamma | float | Unit [-]
-        water_depth： water depth of the sea, assume flat sea floor. A position number | float | Unit [m]
+        significant_wave_height: significant wave height | float | Unit [m]
+        peak_period: peak period | float | Unit [s]
+        gamma: gamma | float | Unit [-]
+        water_depth: water depth of the sea, assume flat sea floor. A position number | float | Unit [m]
         wave_direction: direction of wave propagation. | float | Unit [degree]
         """
         self.hs = significant_wave_height
