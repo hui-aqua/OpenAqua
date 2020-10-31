@@ -41,7 +41,7 @@ class morisonModel:
         self.dwh = dwh  # used for the force calculation (reference area)
         self.dws = np.sqrt(dwh / dw0) * dw0
         self.sn = solidity
-        self.FEtime = 0
+        # self.FEtime = 0
         self.hydro_dynamic_forces = np.zeros((len(hydro_element), 3))
         self.hydro_static_forces = np.zeros((len(hydro_element), 3))
         self.hydro_total_forces = np.zeros((len(hydro_element), 3))
@@ -142,14 +142,55 @@ class morisonModel:
         num_line = len(self.line_elements)
         force_on_element = np.zeros((num_line, 3))  # force on line element, initial as zeros
         for index in range(num_line):
-            element_length = np.linalg.norm(node_position[int(self.line_elements[index][0])] - node_position[int(self.line_elements[index][1])])
-            element_volume=0.25*pi*pow(self.dws,2)*element_length
-            element_center=(node_position[int(self.line_elements[index][0])] + node_position[int(self.line_elements[index][1])]) / 2.0
-            element_elevation = (elevation[int(self.line_elements[index][0])] + elevation[int(self.line_elements[index][1])]) / 2.0
-            if element_center[2] > element_elevation:
-                force_on_element[index]=[0,0,element_volume*gravity*row_air]
+            element_vector = node_position[int(self.line_elements[index][0])] - node_position[
+                int(self.line_elements[index][1])]
+            element_length = np.linalg.norm(element_vector)
+
+            element_center = (node_position[int(self.line_elements[index][0])] + node_position[
+                int(self.line_elements[index][1])]) / 2.0
+            element_elevation = (elevation[int(self.line_elements[index][0])] + elevation[
+                int(self.line_elements[index][1])]) / 2.0
+            element_volume = 0.25 * pi * pow(self.dws, 2) * element_length
+            # element vector is always z positive
+            if np.dot(element_vector, np.array([0, 0, 1])) < 0:
+                element_vector *= -1
+            # ce vector is from center of element to elevation, theoretically is  [0,0,z].
+            # if z >0 means the center of element is below the water.
+            ce_vector = element_elevation - element_center
+            cos_theta = np.dot(element_vector, ce_vector) / (element_length * np.linalg.norm(ce_vector))
+            # print(cos_theta)
+            # print(ce_vector)
+            # print(element_vector)
+            if abs(cos_theta) > self.dws / element_length:
+                # the line element is vertical or incline
+                # fully submerged or above water
+                if np.linalg.norm(ce_vector) >= abs(0.5 * element_length * cos_theta):
+                    if ce_vector[2] < 0:
+                        force_on_element[index] = [0, 0, element_volume * gravity * row_air]
+                    else:
+                        # fully submerged
+                        force_on_element[index] = [0, 0, element_volume * gravity * row_water]
+                # partly submerged in water
+                else:
+                    submerged_volume = 0.25 * pi * pow(self.dws, 2) * (
+                                0.5 * element_length + np.linalg.norm(ce_vector) / cos_theta)
+                    force_on_element[index] = [0, 0, submerged_volume * gravity * row_water]
+            # Now, we assume the line element is horizontal, parallel to water level
             else:
-                force_on_element[index] = [0, 0, element_volume * gravity * row_water]
+                print("horizontal")
+                if ce_vector[2] > 0.5 * self.dws:
+                    force_on_element[index] = [0, 0, element_volume * gravity * row_water]
+                elif ce_vector[2] < -0.5 * self.dws:
+                    force_on_element[index] = [0, 0, element_volume * gravity * row_air]
+                else:
+                    alpha = np.arccos(np.linalg.norm(ce_vector) / (0.5 * self.dws))
+                    section_area = 0.25 * pi * pow(self.dws, 2)
+                    area_fg = 0.25 * pow(self.dws, 2) * alpha - 0.5 * np.linalg.norm(ce_vector) * self.dws * np.sin(
+                        alpha)
+                    submerged_area = 0.5 * section_area + np.sign(ce_vector[2]) * (0.5 * section_area - area_fg)
+                    submerged_volume = submerged_area * element_length
+                    force_on_element[index] = [0, 0, submerged_volume * gravity * row_water]
+
         self.hydro_static_forces = np.array(force_on_element)
         return np.array(force_on_element)
 
@@ -160,13 +201,44 @@ class morisonModel:
         :return: [np.array].shape=(N,3) Unit [N]. The hydrodynamic forces on all N nodes
         """
         force_on_nodes = np.zeros((number_of_node, 3))  # force on nodes, initial as zeros
-        self.hydro_total_forces=self.hydro_static_forces+self.hydro_dynamic_forces
+        self.hydro_total_forces = self.hydro_static_forces + self.hydro_dynamic_forces
         for index, line in enumerate(self.line_elements):
             force_on_nodes[line[0]] += (self.hydro_total_forces[index]) / 2
             force_on_nodes[line[1]] += (self.hydro_total_forces[index]) / 2
         return force_on_nodes
 
 
-
 if __name__ == "__main__":
-    pass
+    import matplotlib.pyplot as plt
+    # translation
+    # elevation = np.array([[0,0,0],[1,0,0]])
+    # line1=morisonModel('M4',[[1,2]],0.2,0.01,0.01)
+    # num_p=1000
+    # z=np.linspace(-0.02,0.02,num_p)
+    # # z = np.linspace(-3, 3, num_p)
+    # posi=np.zeros((num_p,2,3))
+    # buoy=np.zeros((num_p,3))
+    # for i in range(num_p):
+    #     posi[i]=np.array([[0,0,z[i]],[1,0,z[i]-0]])
+    #     buoy[i] = line1.cal_buoy_force(posi[i],elevation)
+    # # print(buoy)
+    # print(pi*0.25*0.01*0.01)
+    # plt.plot(z,buoy)
+    # plt.show()
+
+    # rotate
+
+    # line1=morisonModel('M4',[[1,2]],0.2,0.01,0.01)
+    # num_p=1000
+    # x = np.cos(np.linspace(0,2*pi,num_p))*0.5
+    # z = np.sin(np.linspace(0, 2 * pi, num_p)) * 0.5
+    # posi=np.zeros((num_p,2,3))
+    # buoy=np.zeros((num_p,3))
+    # for i in range(num_p):
+    #     elevation = np.array([[x[i], 0, 0], [-x[i], 0, 0]])
+    #     posi[i]=np.array([[x[i],0,z[i]+0.001],[-x[i],0,-z[i]+0.001]])
+    #     buoy[i] = line1.cal_buoy_force(posi[i],elevation)
+    # # print(buoy)
+    # plt.plot(np.linspace(0,360,num_p),buoy)
+    # plt.show()
+    #
