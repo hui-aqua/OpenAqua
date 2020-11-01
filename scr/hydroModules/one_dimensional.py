@@ -145,43 +145,35 @@ class morisonModel:
             element_vector = node_position[int(self.line_elements[index][0])] - node_position[
                 int(self.line_elements[index][1])]
             element_length = np.linalg.norm(element_vector)
+            element_volume = 0.25 * pi * pow(self.dws, 2) * element_length
 
             element_center = (node_position[int(self.line_elements[index][0])] + node_position[
                 int(self.line_elements[index][1])]) / 2.0
+
             element_elevation = (elevation[int(self.line_elements[index][0])] + elevation[
                 int(self.line_elements[index][1])]) / 2.0
-            element_volume = 0.25 * pi * pow(self.dws, 2) * element_length
-            # element vector is always z positive
-            if np.dot(element_vector, np.array([0, 0, 1])) < 0:
-                element_vector *= -1
-            # ce vector is from center of element to elevation, theoretically is  [0,0,z].
-            # if z >0 means the center of element is below the water.
             ce_vector = element_elevation - element_center
-            cos_theta = np.dot(element_vector, ce_vector) / (element_length * np.linalg.norm(ce_vector))
-            # print(cos_theta)
-            # print(ce_vector)
-            # print(element_vector)
-            if abs(cos_theta) > self.dws / element_length:
-                # the line element is vertical or incline
-                # fully submerged or above water
-                if np.linalg.norm(ce_vector) >= abs(0.5 * element_length * cos_theta):
-                    if ce_vector[2] < 0:
-                        force_on_element[index] = [0, 0, element_volume * gravity * row_air]
-                    else:
-                        # fully submerged
-                        force_on_element[index] = [0, 0, element_volume * gravity * row_water]
-                # partly submerged in water
+            ae_vector=elevation[int(self.line_elements[index][0])]-node_position[int(self.line_elements[index][0])]
+            be_vector=elevation[int(self.line_elements[index][1])]-node_position[int(self.line_elements[index][1])]
+            if np.dot(ae_vector,be_vector)>=0:
+                # half submerged half in air
+                if ae_vector[2]==0 and be_vector[2]==0:
+                    force_on_element[index] = [0, 0, 0.5 * element_volume * gravity * (row_air+row_water)]
+                # all submerged
+                elif ae_vector[2]>0 or be_vector[2]>0:
+                    force_on_element[index] = [0, 0, 0.5 * element_volume * gravity * (row_water + row_water)]
                 else:
-                    submerged_volume = 0.25 * pi * pow(self.dws, 2) * (
-                                0.5 * element_length + np.linalg.norm(ce_vector) / cos_theta)
-                    force_on_element[index] = [0, 0, submerged_volume * gravity * row_water]
-            # Now, we assume the line element is horizontal, parallel to water level
+                    force_on_element[index] = [0, 0, 0.5 * element_volume * gravity * (row_air + row_air)]
             else:
-                print("horizontal")
-                if ce_vector[2] > 0.5 * self.dws:
-                    force_on_element[index] = [0, 0, element_volume * gravity * row_water]
-                elif ce_vector[2] < -0.5 * self.dws:
-                    force_on_element[index] = [0, 0, element_volume * gravity * row_air]
+                # partly submerged in water
+                vertical_distance=abs(ae_vector[2]-be_vector[2])
+                if vertical_distance>self.dws:
+                    if ae_vector[2]>0:
+                        f_buoy= element_volume * gravity * row_water * (ae_vector[2] / vertical_distance)-element_volume * gravity * row_air*(be_vector[2]/vertical_distance)
+                    else:
+                        f_buoy = element_volume * gravity * row_water * (be_vector[2] / vertical_distance) - element_volume * gravity * row_air * (ae_vector[2] / vertical_distance)
+                    force_on_element[index] = [0, 0, f_buoy]
+                # we assume it is horizontal to the water level
                 else:
                     alpha = np.arccos(np.linalg.norm(ce_vector) / (0.5 * self.dws))
                     section_area = 0.25 * pi * pow(self.dws, 2)
@@ -209,36 +201,4 @@ class morisonModel:
 
 
 if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-    # translation
-    # elevation = np.array([[0,0,0],[1,0,0]])
-    # line1=morisonModel('M4',[[1,2]],0.2,0.01,0.01)
-    # num_p=1000
-    # z=np.linspace(-0.02,0.02,num_p)
-    # # z = np.linspace(-3, 3, num_p)
-    # posi=np.zeros((num_p,2,3))
-    # buoy=np.zeros((num_p,3))
-    # for i in range(num_p):
-    #     posi[i]=np.array([[0,0,z[i]],[1,0,z[i]-0]])
-    #     buoy[i] = line1.cal_buoy_force(posi[i],elevation)
-    # # print(buoy)
-    # print(pi*0.25*0.01*0.01)
-    # plt.plot(z,buoy)
-    # plt.show()
-
-    # rotate
-
-    # line1=morisonModel('M4',[[1,2]],0.2,0.01,0.01)
-    # num_p=1000
-    # x = np.cos(np.linspace(0,2*pi,num_p))*0.5
-    # z = np.sin(np.linspace(0, 2 * pi, num_p)) * 0.5
-    # posi=np.zeros((num_p,2,3))
-    # buoy=np.zeros((num_p,3))
-    # for i in range(num_p):
-    #     elevation = np.array([[x[i], 0, 0], [-x[i], 0, 0]])
-    #     posi[i]=np.array([[x[i],0,z[i]+0.001],[-x[i],0,-z[i]+0.001]])
-    #     buoy[i] = line1.cal_buoy_force(posi[i],elevation)
-    # # print(buoy)
-    # plt.plot(np.linspace(0,360,num_p),buoy)
-    # plt.show()
-    #
+    pass
