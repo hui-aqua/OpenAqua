@@ -10,7 +10,6 @@ please email: hui.cheng@uis.no \n
 
 """
 import numpy as np
-from numpy import pi
 
 def current_reduce_simple(factor,node_position,velocity_fluid):
     """
@@ -31,5 +30,5 @@ def current_reduce_simple(factor,node_position,velocity_fluid):
     return velocity_modified
 
 if __name__ == "__main__":
-    k=current_reduce(0.8,np.array([[1,0,0],[-1,0,0]]),np.array([[1,0,0],[1,0,0]]))
+    k=current_reduce_simple(0.8,np.array([[1,0,0],[-1,0,0]]),np.array([[1,0,0],[1,0,0]]))
     print(k)

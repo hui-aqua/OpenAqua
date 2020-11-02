@@ -21,7 +21,7 @@ dynamic_viscosity = 1.002e-3  # when the water temperature is 20 degree.
 gravity = 9.81
 
 
-class screenModel:
+class ScreenModel:
     """
     For Screen hydrodynamic models, the forces on netting are calculated based on individual a panel section of netting.
     The twines and knots in the net panel are considered as an integrated structure. In this module, the net panel is defined by
@@ -32,32 +32,19 @@ class screenModel:
     def __init__(self, model_index, hydro_element, solidity, dw0=0.0, dwh=0.0):
         """
         :param model_index: [string] Unit: [-]. To indicate the model function, e.g.: 'S1', 'S2', 'S3'.
-        :param hydro_element: [[list]] Unit: [-]. A python list to indicate how the net panel are connected. e.g.:[[p1,p2,p3][p2,p3,p4,p5]...]. If the input net panel contains 4 nodes, it will automaticly decomposed to 3 node net panel.
+        :param hydro_element: [[list]] Unit: [-]. A python list to indicate how the net panel are connected.
+        Must be a nx3 shape. e.g.:[[p1,p2,p3][p2,p3,p4...].
         :param solidity: [float] Unit: [-]. The solidity of netting.
         :param dw0: [float] Unit: [m]. The diameter of the physical net twines. It is used for the hydrodynamic coefficients.
         :param dwh: [float] Unit: [m]. The hydrodynamic diameter of the numerical net twines. It is used for the force calculation (reference area)
         """
         self.modelIndex = str(model_index)
-        self.triangular_elements = []
+        self.triangular_elements = (np.array(hydro_element)-1).tolist()
         self.dw0 = dw0
         self.dwh = dwh
         self.dws = np.sqrt(dwh / dw0) * dw0
         self.sn = solidity
         self.FEtime = 0
-        converted_index = hydro_element.copy()
-        # converted_index = list(hydro_element) #if is python2
-        for index, item in enumerate(converted_index):
-            for j in range(len(item)):
-                converted_index[index][j] -= 1
-        for panel in converted_index:  # loop based on the hydrodynamic elements
-            if len([int(k) for k in set(panel)]) <= 3:  # the hydrodynamic element is a triangle
-                self.triangular_elements.append(
-                    [k for k in set([int(k) for k in set(panel)])])  # a list of the node sequence
-            else:
-                for i in range(len(panel)):
-                    nodes = [int(k) for k in panel]  # get the list of nodes [p1,p2,p3,p4]
-                    nodes.pop(i)  # delete the i node to make the square to a triangle
-                    self.triangular_elements.append(nodes)  # delete the i node to make the square to a triangle
         self.hydro_dynamic_forces = np.zeros((len(self.triangular_elements), 3))
         self.hydro_static_forces = np.zeros((len(self.triangular_elements), 3))
         self.hydro_total_forces = np.zeros((len(self.triangular_elements), 3))
@@ -80,9 +67,11 @@ class screenModel:
 
     def hydro_coefficients(self, point1, point2, point3, fluid_velocity, knot=False):
         """
-        :return:
-        :param inflow_angle: [float] Unit [rad]. Definition: the angle between normal vector of a net panel and the flow direction
-        :param fluid_velocity: [np.array].shape=(1,3) Unit: [m/s]. The current velocity [ux,uy,uz] in cartesian coordinate system.
+
+        :param point1: np.array[1,3] | Unit [m]| coordinates of first node.
+        :param point2: np.array[1,3] | Unit [m]| coordinates of second node.
+        :param point3: np.array[1,3] | Unit [m]| coordinates of third node.
+        :param fluid_velocity: np.array[1,3] | Unit [m/s]| flow velocity on the net panel
         :param knot: [boolean] knot option. *Default=False*
         :return: drag and lift force coefficients. [float] Unit: [-].
         """
@@ -195,10 +184,9 @@ class screenModel:
             p1 = node_position[panel[0]]
             p2 = node_position[panel[1]]
             p3 = node_position[panel[2]]
-            element_u = (velocity_fluid[panel[0]] + velocity_fluid[panel[1]] + velocity_fluid[panel[2]]) / 3.0
-            element_v = (velocity_structure[panel[0]] + velocity_structure[panel[1]] + velocity_structure[
-                panel[2]]) / 3.0
-            relative_velocity = element_u - element_v
+            _u = (velocity_fluid[panel[0]] + velocity_fluid[panel[1]] + velocity_fluid[panel[2]]) / 3.0
+            _v = (velocity_structure[panel[0]] + velocity_structure[panel[1]] + velocity_structure[panel[2]]) / 3.0
+            relative_velocity = _u - _v
             net_area, c_d, c_l, drag_direction, lift_direction = self.hydro_coefficients(p1, p2, p3, relative_velocity)
             if elevation is not False:
                 element_center = (p1 + p2 + p3) / 3.0

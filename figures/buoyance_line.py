@@ -34,14 +34,14 @@ plt.rcParams["mathtext.fontset"] = "stix"
 
 # translation
 elevation = np.array([[0,0,0],[1,0,0]])
-line1=morisonModel('M4',[[1,2]],0.2,0.01,0.01)
+line1=MorisonModel('M4',[[1,2]],0.2,0.01,0.01)
 num_p=1000
-z=np.linspace(-0.02,0.02,num_p)
+z=np.linspace(-2,2,num_p)
 # z = np.linspace(-3, 3, num_p)
 posi=np.zeros((num_p,2,3))
 buoy=np.zeros((num_p,3))
 for i in range(num_p):
-    posi[i]=np.array([[0,0,z[i]],[1,0,z[i]-0]])
+    posi[i]=np.array([[0,0,z[i]],[1,0,z[i]-0.1]])
     buoy[i] = line1.cal_buoy_force(posi[i],elevation)
 # print(buoy)
 print(pi*0.25*0.01*0.01)
@@ -58,7 +58,7 @@ posi=np.zeros((num_p,2,3))
 buoy=np.zeros((num_p,3))
 for i in range(num_p):
     elevation = np.array([[x[i], 0, 0], [-x[i], 0, 0]])
-    posi[i]=np.array([[x[i],0,z[i]+0.001],[-x[i],0,-z[i]+0.001]])
+    posi[i]=np.array([[x[i],0,z[i]+0.002],[-x[i],0,-z[i]+0.002]])
     buoy[i] = line1.cal_buoy_force(posi[i],elevation)
 # print(buoy)
 plt.figure()
