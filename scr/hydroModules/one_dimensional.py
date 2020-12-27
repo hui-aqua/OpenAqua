@@ -162,11 +162,11 @@ class MorisonModel:
             sign_set = set(np.sign(list_z))
 
             if sign_set == {0}:
-                force_on_element[index] = [0, 0, 0.5 * element_volume * gravity * (row_air + row_water)]
+                force_on_element[index] = [0, 0, element_volume * gravity * 0.5 * (row_air + row_water)]
             elif sign_set == {1} or sign_set == {0, 1}:
-                force_on_element[index] = [0, 0, 0.5 * element_volume * gravity * (row_water + row_water)]
+                force_on_element[index] = [0, 0, element_volume * gravity * 0.5 * (row_water + row_water)]
             elif sign_set == {-1} or sign_set == {0, -1}:
-                force_on_element[index] = [0, 0, 0.5 * element_volume * gravity * (row_air + row_air)]
+                force_on_element[index] = [0, 0, element_volume * gravity * 0.5 * (row_air + row_air)]
             else:
                 # partly submerged in water + -
                 vertical_distance = abs(np.array(list_z)).sum()
@@ -176,7 +176,7 @@ class MorisonModel:
                                                element_volume * gravity * (row_water * ratio + row_air * (1 - ratio))]
                 # we assume it is horizontal to the water level
                 else:
-                    print("horizontal")
+                    print("The vertical distance is too small. thus, the line is token as horizontal")
                     alpha = np.arccos(np.mean(list_z) / (0.5 * self.dws))
                     section_area = 0.25 * pi * pow(self.dws, 2)
                     area_fg = 0.25 * pow(self.dws, 2) * alpha - 0.5 * np.mean(list_z) * self.dws * np.sin(alpha)
