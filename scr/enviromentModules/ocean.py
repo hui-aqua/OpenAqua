@@ -15,8 +15,6 @@ from scr.enviromentModules import Airywave as wave
 from scr.enviromentModules import wave_spectrum as wsp
 
 import numpy as np
-from numpy import pi
-
 
 class irregular_sea:
     """
@@ -139,7 +137,6 @@ class irregular_sea:
         accelerations[list_of_point[:, 2] > list_elevation] = 0
         return accelerations
 
-
 class current:
     def __init__(self, current_profile: dict, nodes_on_top_rings: dict, nodes_on_net: dict, number_of_nodes: int,
                  Sn: float):
@@ -151,7 +148,8 @@ class current:
         :param nodes_on_net: dictionary.
         :param number_of_nodes: int.
         """
-        self.cd= 0.33 * Sn + 6.54 * pow(Sn, 2) - 4.88 * pow(Sn, 3)
+        self.sn=Sn
+        self.cd = 0.33 * Sn + 6.54 * pow(Sn, 2) - 4.88 * pow(Sn, 3)
         self.current_profile = current_profile
         self.ring_nodes = nodes_on_top_rings
         self.netting_nodes = nodes_on_net
@@ -199,9 +197,9 @@ class current:
             dy = node_position[self.netting_nodes['cage_' + str(i)]][:, 1].ptp()
             # x_0,y_0,z_min, z_max, dy
             self.boxes['cage_' + str(i)] = [top_ring_center[0], top_ring_center[1], z_min, z_max, dy]
-    def initial_wake_factor(self,node_position):
-        """
 
+    def initial_wake_factor(self, node_position):
+        """
         :param node_position: np.array[n,3] | Unit [m]| coordinates of nodes, n is the number of nodes
         :return:
         """
@@ -217,18 +215,14 @@ class current:
                 else:
                     self.net2net_factors[each] = 1.0
 
-
-
-
     def get_cage2cage_wake(self, node_position):
 
-        def factor(x,y):
+        def factor(x, y):
             """
-            :param x: local x
-            :param y: local y
-            :return:
+            :param x: local x  [m]
+            :param y: local y  [m]
+            :return: cage to cage flow reduction factor
             """
-
             a0 = 0.02402
             a1 = 0.04824
             a2 = 0.002303
@@ -238,36 +232,27 @@ class current:
             a6 = -0.001147
             a7 = -0.002984
             w = 2.692
+            # ref: experiments
+            val = a0 + a1 * np.cos(y * w) + a2 * np.cos(2 * y * w) + a3 * np.cos(3 * y * w) + a4 * np.cos(
+                4 * y * w) + a5 * np.cos(5 * y * w) + a6 * np.cos(6 * y * w) + a7 * np.cos(7 * y * w)
 
-            val = a0 + a1 * np.cos(y * w) + a2 * np.cos(2 * x * w) + a3 * np.cos(3 * x * w) + a4 * np.cos(
-            4 * x * w) + a5 * np.cos(
-            5 * x * w) + a6 * np.cos(6 * x * w) + a7 * np.cos(7 * x * w)
+            return val * 5 * self.sn /0.25 * pow(np.exp(-(x-1.5)/25.0),0.5)
 
-            return  val * 5
         # outer loop is by each nodes
-        for i in range(self.number_of_cages):
-            origin = np.array(self.boxes['cage_' + str(i)][:2])
-            dx = self.boxes['cage_' + str(i)][-1]*25  # wake length is 25 times of fish cage diameter
-            dy = self.boxes['cage_' + str(i)][-1]*2 # wake width is 2 times of fish cage diameter
-            dz = self.boxes['cage_' + str(i)][-2]-self.boxes[-3]
-
-
-            for each in self.netting_nodes['cage_' + str(i)]:
-                vector_to_origin = node_position[each][:2] - origin
-                local_x=np.dot(vector_to_origin, self.current_vector[:2])
-                local_y = pow((pow(np.linalg.norm(vector_to_origin),2)-pow(local_x,2)),0.5)
-                local_z=node_position[each][-1]
-                if ( 1.5*dy/4<=local_x<=dx  and local_y <=dy and local_z):
-
-
-                    reducx = val * m_averageSn / 0.25;
-                    self.net2net_factors[each] = 1 - 0.46 * self.cd
-                else:
-                    self.net2net_factors[each] = 1.0
-
-        pass
-
-
+        for index in range(len(self.cage2cage_factors)):
+            for i in range(self.number_of_cages):
+                origin = np.array(self.boxes['cage_' + str(i)][:2])
+                diameter = np.array(self.boxes['cage_' + str(i)][-1])
+                if index not in self.netting_nodes['cage_' + str(i)]:
+                    vector_to_origin = node_position[index][:2] - origin
+                    dz = self.boxes['cage_' + str(i)][-2] - self.boxes['cage_' + str(i)][-3]  # max-min
+                    local_x = np.dot(vector_to_origin, self.current_vector[:2])/diameter
+                    local_y = pow(pow(np.linalg.norm(vector_to_origin)/diameter, 2) - pow(local_x, 2), 0.5)
+                    local_z = node_position[index][-1] -self.boxes['cage_' + str(i)][-3]
+                    if (1 <= local_x <= 25 and local_y <= 1 and 0 < local_z < dz ):
+                        self.cage2cage_factors[index] *=  factor(local_x,local_y)
+                    else:
+                        self.cage2cage_factors[index] *= 1.0
 
     def update_wake(self, node_position):
         """
@@ -277,7 +262,6 @@ class current:
         """
         self.update_bounding_boxes(node_position)
         self.get_cage2cage_wake(node_position)
-        print(self.boxes)
 
     def get_velocity_at_nodes(self, node_position):
         node_velocity = np.zeros((len(node_position), 3))
@@ -291,6 +275,3 @@ class current:
 
 if __name__ == "__main__":
     pass
-    k = np.array([[0, 0, 0], [1.2, 1.2, 1.2], [0, 1, 2], [10, 12, 1]])
-    node = [0, 1, 3]
-    print(k[node][:, 1].ptp())

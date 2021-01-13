@@ -38,9 +38,17 @@ rings=meshinfo['multi_ring']
 net=meshinfo['multi_net']
 point=np.array(meshinfo['Nodes'])
 current=ocean.current(U,rings,net,len(point),0.2)
+current.initial_wake_factor(point)
+waves=ocean.irregular_sea(4,8,1,60,0)
 
 print('number of nodes is')
 print(len(point))
 print('number of nodes on one cage nets  '+str(len(net['cage_0'])))
-u=current.get_velocity_at_nodes(point)
+
+uc=current.get_velocity_at_nodes(point)
+uw=waves.get_velocity_at_nodes(point,0)
+u=uc+uw
 print(u)
+print(uc)
+print("min u is ")
+print(uc.min(axis=0))
