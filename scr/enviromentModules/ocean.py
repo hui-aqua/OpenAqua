@@ -138,34 +138,15 @@ class irregular_sea:
         return accelerations
 
 class current:
-    def __init__(self, current_profile: dict, nodes_on_top_rings: dict, nodes_on_net: dict, number_of_nodes: int,
-                 Sn: float):
+    def __init__(self, current_profile: dict):
         """
         Parameters
         ----------------
         :param current_profile: dictionary.
-        :param nodes_on_top_rings: dictionary.
-        :param nodes_on_net: dictionary.
-        :param number_of_nodes: int.
-        """
-        self.sn=Sn
-        self.cd = 0.33 * Sn + 6.54 * pow(Sn, 2) - 4.88 * pow(Sn, 3)
-        self.current_profile = current_profile
-        self.ring_nodes = nodes_on_top_rings
-        self.netting_nodes = nodes_on_net
-        self.number_of_cages = len(nodes_on_top_rings.keys())
-        self.number_of_nodes_per_ring = len(nodes_on_top_rings['cage_0'])
-        self.number_of_nodes_per_netting = len(nodes_on_net['cage_0'])
-        self.net2net_factors = [1.0] * number_of_nodes
-        self.cage2cage_factors = [1.0] * number_of_nodes
-        # The first current vector define the direction for cage-to-cage wake effect direction
-        current_top = np.array(current_profile['velocity'][0])
-        self.current_vector = current_top / np.linalg.norm(current_top)  # unit vector
-        # bounding box for cage-to-cage wake effect
-        self.boxes = {}
-        for each in range(self.number_of_cages):
-            self.boxes['cage_' + str(each)] = [0, 0, 0, 0, 0]  # x_0,y_0,z_min, z_max, dy
 
+        """
+        self.current_profile = current_profile
+        self.flow_velocity=[]
     def linear_interpolation_current(self, z):
         if z > np.max(np.array(self.current_profile['depth'])):
             u_final = self.current_profile['velocity'][0]
@@ -185,38 +166,76 @@ class current:
             u_final = np.array(u2) * float(abs(z - z1) / dz) + np.array(u1) * abs(z - z2) / dz
         return u_final
 
-    def update_bounding_boxes(self, node_position):
+
+    def update_velocity_at_nodes(self, node_position):
+        if type(self.current_profile) == type([]):
+            self.flow_velocity=np.ones(len(node_position),3)*self.current_profile
+        elif type(self.current_profile) == type({}):
+            self.flow_velocity = np.zeros((len(node_position), 3))
+            for index, position in enumerate(node_position.tolist()):
+                self.flow_velocity[index] = self.linear_interpolation_current(position[2])
+
+    def get_velocity_at_nodes(self, node_position):
+        self.update_velocity_at_nodes(node_position)
+        return self.flow_velocity
+
+
+class wakeEffect:
+    def __init__(self,current_direction: list, net2netWake=False, cage2cageWake=False ):
+        """
+
+        :param current_direction:  [ux,uy,uz] Unit: m/s, give the direction of current direction
+        :param net2netWake: True or False, trigger for net-to-net wake effect
+        :param cage2cageWake: True or False, trigger for cage-to-cage wake effect
+        """
+        self.direction=np.array(current_direction)/np.linalg.norm(np.array(current_direction))
+        self.wake1=net2netWake
+        self.wake2=cage2cageWake
+
+    def initial_wake(self, node_position:list, fish_cages: dict, Sn: float):
+        """
+
+        :param node_position: np.array[n,3] | Unit [m]| coordinates of nodes, n is the number of nodes
+        :param fish_cages:
+        :param Sn:
+        :return:
+        """
+        self.Sn=Sn
+        self.cd = 0.33 * Sn + 6.54 * pow(Sn, 2) - 4.88 * pow(Sn, 3)
+        self.ru1 = [1.0] * len(node_position)
+        self.ru2 = [1.0] * len(node_position)
+        self.number_of_cages = len(fish_cages.keys())
+        self.fish_cage = {}
+        for key in fish_cages.keys():
+            self.fish_cage[key]=set(fish_cages[key])
+        self.boxes = {}
+        for each in range(self.number_of_cages):
+            self.boxes['cage_' + str(each)] = [0, 0, 0, 0, 0]  # x_0,y_0,z_min, z_max, dy
+
+        if self.wake1:
+            self.update_ru_net2net(node_position)
+        else:
+            pass
+
+    def update_ru_net2net(self,node_position):
         """
         :param node_position: np.array[n,3] | Unit [m]| coordinates of nodes, n is the number of nodes
         :return: Only update the variable without return value.
         """
         for i in range(self.number_of_cages):
-            top_ring_center = node_position[self.ring_nodes['cage_' + str(i)]].mean(axis=0)
-            z_min = node_position[self.netting_nodes['cage_' + str(i)]][:, 2].min()
-            z_max = node_position[self.netting_nodes['cage_' + str(i)]][:, 2].max()
-            dy = node_position[self.netting_nodes['cage_' + str(i)]][:, 1].ptp()
-            # x_0,y_0,z_min, z_max, dy
-            self.boxes['cage_' + str(i)] = [top_ring_center[0], top_ring_center[1], z_min, z_max, dy]
+            origin = np.array(self.boxes['cage_' + str(i)][:2])
+            for each in self.fish_cage['cage_' + str(i)]:
+                vector_to_origin = node_position[each][:2] - origin
+                if np.dot(vector_to_origin, self.direction[:2]) >= 1.0:
+                    self.ru1[each] = 1 - 0.46 * self.cd
+                else:
+                    self.ru1[each] = 1.0
 
-    def initial_wake_factor(self, node_position):
+    def update_ru_cage2cage(self,node_position):
         """
         :param node_position: np.array[n,3] | Unit [m]| coordinates of nodes, n is the number of nodes
-        :return:
+        :return: Only update the variable without return value.
         """
-        self.get_net2net_wake(node_position)
-
-    def get_net2net_wake(self, node_position):
-        for i in range(self.number_of_cages):
-            origin = np.array(self.boxes['cage_' + str(i)][:2])
-            for each in self.netting_nodes['cage_' + str(i)]:
-                vector_to_origin = node_position[each][:2] - origin
-                if np.dot(vector_to_origin, self.current_vector[:2]) >= 1.0:
-                    self.net2net_factors[each] = 1 - 0.46 * self.cd
-                else:
-                    self.net2net_factors[each] = 1.0
-
-    def get_cage2cage_wake(self, node_position):
-
         def factor(x, y):
             """
             :param x: local x  [m]
@@ -236,41 +255,57 @@ class current:
             val = a0 + a1 * np.cos(y * w) + a2 * np.cos(2 * y * w) + a3 * np.cos(3 * y * w) + a4 * np.cos(
                 4 * y * w) + a5 * np.cos(5 * y * w) + a6 * np.cos(6 * y * w) + a7 * np.cos(7 * y * w)
 
-            return val * 5 * self.sn /0.25 * pow(np.exp(-(x-1.5)/25.0),0.5)
+            return val * 5 * self.Sn /0.25 * pow(np.exp(-(x-1.5)/25.0),0.5)
+
+        for i in range(self.number_of_cages):
+            top_ring_center = node_position.mean(axis=0)
+            z_min = node_position[self.fish_cage['cage_' + str(i)]][:, 2].min()
+            z_max = node_position[self.fish_cage['cage_' + str(i)]][:, 2].max()
+            dy = node_position[self.fish_cage['cage_' + str(i)]][:, 1].ptp()
+            # x_0,y_0,z_min, z_max, dy
+            self.boxes['cage_' + str(i)] = [top_ring_center[0], top_ring_center[1], z_min, z_max, dy]
+
 
         # outer loop is by each nodes
-        for index in range(len(self.cage2cage_factors)):
+        for index in range(len(node_position)):
             for i in range(self.number_of_cages):
                 origin = np.array(self.boxes['cage_' + str(i)][:2])
                 diameter = np.array(self.boxes['cage_' + str(i)][-1])
-                if index not in self.netting_nodes['cage_' + str(i)]:
+                if index not in self.fish_cage['cage_' + str(i)]:
                     vector_to_origin = node_position[index][:2] - origin
                     dz = self.boxes['cage_' + str(i)][-2] - self.boxes['cage_' + str(i)][-3]  # max-min
-                    local_x = np.dot(vector_to_origin, self.current_vector[:2])/diameter
+                    local_x = np.dot(vector_to_origin, self.direction[:2])/diameter
                     local_y = pow(pow(np.linalg.norm(vector_to_origin)/diameter, 2) - pow(local_x, 2), 0.5)
                     local_z = node_position[index][-1] -self.boxes['cage_' + str(i)][-3]
                     if (1 <= local_x <= 25 and local_y <= 1 and 0 < local_z < dz ):
-                        self.cage2cage_factors[index] *=  factor(local_x,local_y)
+                        self.ru2[index] *=  factor(local_x,local_y)
                     else:
-                        self.cage2cage_factors[index] *= 1.0
+                        self.ru2[index] *= 1.0
 
-    def update_wake(self, node_position):
+
+    def reduction(self,node_position):
         """
-        update the cage to cage wake factor and net to net wake factor
         :param node_position: np.array[n,3] | Unit [m]| coordinates of nodes, n is the number of nodes
         :return: Only update the variable without return value.
         """
-        self.update_bounding_boxes(node_position)
-        self.get_cage2cage_wake(node_position)
+        self.update_ru_cage2cage(node_position)
+        return np.array(self.ru1)*np.array(self.ru2)
 
-    def get_velocity_at_nodes(self, node_position):
-        node_velocity = np.zeros((len(node_position), 3))
-        self.update_wake(node_position)
-        for index, position in enumerate(node_position.tolist()):
-            node_velocity[index] = self.linear_interpolation_current(position[2]) * self.net2net_factors[index] * \
-                                   self.cage2cage_factors[index]
+    def update_u(self,flow_velocity,node_position):
+        """
 
-        return node_velocity
+        :param flow_velocity:
+        :param node_position:
+        :return:
+        """
+        self.update_ru_cage2cage(node_position)
+        u=np.zeros((len(flow_velocity),3))
+        for i in range(len(flow_velocity)):
+            u[i]=flow_velocity[i]*self.ru1[i]*self.ru2[i]
+        return u
+
+
+
 
 
 if __name__ == "__main__":
