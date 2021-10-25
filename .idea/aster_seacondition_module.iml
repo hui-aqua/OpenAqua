@@ -2,12 +2,21 @@
 <module type="PYTHON_MODULE" version="4">
   <component name="NewModuleRootManager">
     <content url="file://$MODULE_DIR$">
-      <excludeFolder url="file://$MODULE_DIR$/venv" />
+      <sourceFolder url="file://$MODULE_DIR$/Apps" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/scr" isTestSource="false" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.7 (OpenAqua)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.8" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="PyDocumentationSettings">
     <option name="renderExternalDocumentation" value="true" />
+  </component>
+  <component name="TemplatesService">
+    <option name="TEMPLATE_FOLDERS">
+      <list>
+        <option value="$MODULE_DIR$/waves" />
+        <option value="$MODULE_DIR$/figures" />
+      </list>
+    </option>
   </component>
 </module>

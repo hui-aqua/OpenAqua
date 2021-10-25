@@ -118,6 +118,7 @@ class MorisonModel:
         :return: np.array[m,3] | Unit [N]| hydrodynamic forces on elements, m is the number of element
         """
         num_line = len(self.line_elements)
+
         force_on_element = np.zeros((num_line, 3))  # force on line element, initial as zeros
         for index in range(num_line):
             element_length = np.linalg.norm(

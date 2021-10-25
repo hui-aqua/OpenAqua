@@ -233,6 +233,36 @@ class ScreenModel:
         self.hydro_dynamic_forces = np.array(force_on_element)
         return np.array(force_on_element)
 
+    def cal_aw_ratio(self,list_z):
+        """
+        calculate hydrodynamic forces on line-type structure.
+        :param list_z: [ae,be,ce] |
+        :param elevation: np.array[n,1] |Unit [m]| elevation of the sea, n is the number of nodes
+        :return: np.array[m,3] |Unit [N]| buoyancy force on elements, m is the number of elements
+        """
+        sign_set = set(np.sign(list_z))
+        ratio_water = 1.0
+        if sign_set == {-1} or sign_set == {0, -1}: # all in air
+            ratio_water=0.0
+
+        elif sign_set == {1} or sign_set == {0, 1}: # all in water
+            ratio_water=1.0
+        elif sign_set == {0}:  # exact half
+            ratio_water=0.5
+        elif sign_set == {1, -1}:
+            # ++- or --+
+            if np.sign(list_z).sum() > 0: # ++-
+                z1 = -min(np.array(list_z))
+                ratio_water = 1-(z1 / abs(np.array(list_z))).prod()
+            else:  # --+
+                z1 = max(np.array(list_z))
+                ratio_water =1- (z1 / abs(np.array(list_z))).prod()
+        else:
+            # 0 + -
+            total_height = abs(np.array(list_z)).sum()
+            ratio_water = max(np.array(list_z)) / total_height
+        return ratio_water
+
     def cal_buoy_force(self, node_position, elevation):
         """
         calculate hydrodynamic forces on line-type structure.
@@ -253,33 +283,8 @@ class ScreenModel:
             be_vector = elevation[int(self.triangular_elements[index][1])] - node_position[int(self.triangular_elements[index][1])]
             ce_vector = elevation[int(self.triangular_elements[index][2])] - node_position[int(self.triangular_elements[index][2])]
             list_z = [ae_vector[2], be_vector[2], ce_vector[2]]
-            sign_set = set(np.sign(list_z))
-
-            if sign_set == {-1} or sign_set == {0, -1}:
-                force_on_element[index] = [0, 0, element_volume * gravity * row_air]
-            elif sign_set == {1} or sign_set == {0, 1}:
-                force_on_element[index] = [0, 0, element_volume * gravity * row_water]
-            elif sign_set == {0}:
-                force_on_element[index] = [0, 0, element_volume * gravity * 0.5 * (row_water + row_air)]
-            elif sign_set == {1, -1}:
-                # ++- or --+
-                if np.sign(list_z).sum() > 0:
-                    # ++-
-                    z1 = -min(np.array(list_z))
-                    ratio = (z1 / abs(np.array(list_z))).prod()
-                    force_on_element[index] = [0, 0,
-                                               element_volume * gravity * (row_air * ratio + row_water * (1 - ratio))]
-                else:  # --+
-                    pass
-                    z1 = max(np.array(list_z))
-                    ratio = (z1 / abs(np.array(list_z))).prod()
-                    force_on_element[index] = [0, 0,
-                                               element_volume * gravity * (row_water * ratio + row_air * (1 - ratio))]
-            else:
-                # 0 + -
-                total_height = abs(np.array(list_z)).sum()
-                ratio = max(np.array(list_z)) / total_height
-                force_on_element[index] = [0, 0, element_volume * gravity * (row_air * (1 - ratio) + row_water * ratio)]
+            ratio=self.cal_aw_ratio(list_z)
+            force_on_element[index] = [0, 0, element_volume * gravity * (row_air * (1 - ratio) + row_water * ratio)]
         self.hydro_static_forces = np.array(force_on_element) / 2
         return np.array(force_on_element) / 2
 
